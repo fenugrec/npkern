@@ -1,0 +1,2 @@
+These are kernels compiled with the current source code.
+Note : they may not be as up-to-date as latest code on the git repo.

@@ -1,0 +1,45 @@
+***********
+Compiling the kernel
+
+This should only be necessary if you want to customize or add features to the kernel. Otherwise,
+using the pre-compiled kernels in the "precompiled" folder will be easier. See "USING.txt"
+
+
+*** Requirements:
+
+- a gcc toolchain targetting sh processors, such as "GNUSH" (previously "KPIT GNU SH"):
+ https://gcc-renesas.com/sh/download-latest-toolchains/
+
+- "make", any version should work (the gcc toolchain may include one; otherwise on win* try mingw32-make)
+
+- this source code, either from a release or from the git repo (use git to try the latest features under development)
+
+
+*** build options / customization
+Pretty basic at the moment.
+
+- toolchain : make sure the toolchain executable's PREFIX is set properly in the Makefile.
+
+- target / CPU type. Kernels are not interchangeable because the RAM memory areas are slightly different.
+The easiest way to specify the target is to use
+"make BUILDWHAT=SH7055_18" and similar. Refer to the Makefile for possible choices for the BUILDWHAT parameter.
+
+- default serial comms speed
+If communications are unreliable at the default speed (currently 62.5kbps), simply modify the divisor value in "platf.h"  (SCI_DEFAULTDIV).
+Refer to the datasheet for details; typically the formula is "divisor = (20 * 1000 / (32 * speed_in_kbps)) -1".
+
+- post-write/erase verification
+POSTFLASH_VERIFY and POSTERASE_VERIFY can be set to enable verification after writing or erasing each chunk / block.
+The post-write verification will soon be enabled permanently, deprecating that option.
+The post-erase verification just checks that all bytes are indeed 0xFF; not a very useful test. 
+
+
+*** build environment
+very simple : from the command-line, 'make' and the gcc binaries should be rechable. Under Win*, I have a batch file with
+  set PATH=d:\dev\gcc-sh\sh-elf\bin;d:\dev\gcc-sh\sh-elf\libexec\gcc\sh-elf\4.7-GNUSH_v13.01;%PATH%
+
+
+*** compiling
+easy :  "make" 
+"make clean" deletes generated files (recommended for every iteration during development)
+
