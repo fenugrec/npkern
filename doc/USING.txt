@@ -25,6 +25,8 @@ However longer data packets (as those sent during reflashing) are tedious to cra
 
 ***** typical setup : freediag/nisprog
 TODO : modify after "nisprog" gets forked
+Note : inside nisprog, most commands have a short help string if you add a question mark after the command name, like "set interface ?".
+For more info, refer to doc/Scantool-Manual.html , or http://freediag.sourceforge.net/Scantool-Manual.html .
 
 - in the "set" submenu, make sure everything is OK. Example :
 	set
@@ -115,7 +117,8 @@ manually (TODO : purge automatically / describe how). I open realterm and send 0
  - give that location to the kernel : "sr 0xBE 0x02 <addr2> <addr1> <addr0>
    example if the function is at 0x035250 in the ROM :
 	sr 0xbe 0x02 0x03 0x52 0x50
- - use "np 10 ?" because I can't remember the extra argument to specify EEPROM
+ - use "np 10" and add "eep" at the end to specify the address is in EEPROM:
+	np 10 eeprom_dump.bin 0 512 eep
 
 
 ***** All done ? reset the ECU !
