@@ -46,7 +46,7 @@ LDSCRIPT = lkr_705x_180nm.ld
 
 
 ASRC = start_705x.s
-SRC = intprg.c ivect.c cmd_parser.c eep_funcs.c main.c
+SRC = intprg.c ivect.c cmd_parser.c eep_funcs.c main.c crc.c
 SRC += platf_705x_180nm.c platf_705x.c
 
 
