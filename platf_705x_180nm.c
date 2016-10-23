@@ -240,9 +240,9 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 		if (rv) {
 			return (rv & 0xFF) | 0x80;	//tweak into valid NRC
 		}
-#ifdef POSTFLASH_VERIFY
+
 		if (memcmp((void *)dest, (void *)src, 128) != 0) return PFWB_VERIFAIL;
-#endif
+
 		dest += 128;
 		src += 128;
 		len -= 128;

@@ -24,9 +24,6 @@
 /****** kernel customization ******/
 #define SCI_DEFAULTDIV 9	//default value for BRR reg  == (20 * 1000 / (32 * 62.5)) -1
 
-/* Uncomment to enable verification after writing every chunk. Adds ~ 64 bytes to kernel */
-#define POSTFLASH_VERIFY
-
 /* Uncomment to enable verification of succesful block erase . Adds 128B for the block descriptors + ~ 44B of code */
 //#define POSTERASE_VERIFY
 
