@@ -97,27 +97,6 @@ u32 crc_be_8bt(const u32 *message, u32 siz) {
 	return ~crc;
 }
 
-#if 0
-/* attempt to convert to bigE; cancelled */
-u32 c32t1(u8 *buf, u32 siz) {
-	#define CRCPOLY CRCPOLY
-	u32 remainder = 0;
-	u32  multiple;
-	u32 input_bytes = siz;
-	u32 i;
-
-	for (i = 0; i < input_bytes; i++) {
-		remainder ^= buf[i] << 24;
-		int j;
-		for (j = 0; j < 8; j++) {
-			multiple = (remainder & 0x80000000) ? CRCPOLY : 0;
-			remainder = (remainder << 1) ^ multiple;
-		}
-	}
-	return remainder;
-}
-#endif
-
 
 /* version for smaller table (64B); per 4bit nib . ~ 21.5 cy/byte, sizeof(func)=0x78  */
 u32 crc_be_4bt(const u32 *message, u32 siz) {
