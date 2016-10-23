@@ -38,7 +38,7 @@ PROJECT = npkern
 
 ASFLAGS = $(CPU) $(DBGFLAGS) -nostartfiles -Wa,-amhls=$(<:.s=.lst) $(E_ASFLAGS)
 CPFLAGS = $(CPU) $(DBGFLAGS) $(OPT) -fomit-frame-pointer -std=gnu99 -Wall -Wextra -Wstrict-prototypes \
-	-fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(E_CFLAGS)
+	-fstack-usage -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(E_CFLAGS)
 
 LDFLAGS = $(CPU) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(PROJECT).map,--cref,--gc-sections
 
@@ -74,6 +74,7 @@ all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
 .PHONY : clean
 clean:
 	-rm -f $(OBJS)
+	-rm -f $(SRC:.c=.su)
 	-rm -f  $(PROJECT).elf
 	-rm -f  $(PROJECT).map
 	-rm -f  $(PROJECT).hex
