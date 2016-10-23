@@ -9,7 +9,7 @@
 
 
 /* approx 80 cycles per byte, codesize = 0x30 */
-u32 crc32b(u8 *message, u32 siz) {
+u32 crc32b(const u8 *message, u32 siz) {
 	int i, j;
 	u32 crc, mask;
 
@@ -97,51 +97,3 @@ u32 crc_be_8bt(const u32 *message, u32 siz) {
 	return ~crc;
 }
 
-
-/* version for smaller table (64B); per 4bit nib . ~ 21.5 cy/byte, sizeof(func)=0x78  */
-u32 crc_be_4bt(const u32 *message, u32 siz) {
-	int j;
-	u32 byte;
-	u32 crc;
-	static u32 table[16];
-
-	/* Set up the table, if necessary. */
-
-	if (table[1] == 0) {
-		for (byte = 0; byte < 16; byte++) {
-			crc = byte;
-			for (j = 4; j >= 0; j--) {
-				u32 mask;
-				mask = -(crc & 1);
-				crc = (crc >> 1) ^ (CRCPOLY & mask);
-			}
-			table[byte] = crc;
-		}
-	}
-
-	/* Through with table setup, now calculate the CRC. */
-
-	crc = 0xFFFFFFFF;
-	while (siz > 0) {
-		u32 word = *message;
-		crc = crc ^ word;
-		int i;
-		#if 1
-		for (i = 0; i < 8; i++) {
-			crc = (crc >> 4) ^ table[crc & 0x0F];
-		}
-		#else	//code = 0x5c bigger, but 17cy/B
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		crc = (crc >> 4) ^ table[crc & 0x0F];
-		#endif
-		message += 1;
-		siz -= 4;
-	}
-	return ~crc;
-}

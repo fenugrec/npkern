@@ -361,8 +361,8 @@ u32 cmd_romcrc(u8 *chunkno) {
 	u16 chunk = (*chunkno << 8) | *(chunkno+1);
 	u32 start = chunk * 1024;
 	u32 crc;
+	crc = crc32b((u8 *) start, 1024);
 	crc = crc_be_8bt((u32 *) start, 1024);
-	crc = crc_be_4bt((u32 *) start, 1024);
 	return 0;
 }
 
