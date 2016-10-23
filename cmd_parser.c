@@ -360,10 +360,9 @@ u8 cks_add8(u8 *data, unsigned len) {
 u32 cmd_romcrc(u8 *chunkno) {
 	u16 chunk = (*chunkno << 8) | *(chunkno+1);
 	u32 start = chunk * 1024;
-	u32 crc;
+	u16 crc;
 	crc = crc16((u8 *)start, 1024);
-	crc = crc32b((u8 *) start, 1024);
-	crc = crc_be_8bt((u32 *) start, 1024);
+
 	return 0;
 }
 
