@@ -26,6 +26,7 @@
 
 #include "eep_funcs.h"
 #include "iso_cmds.h"
+#include "crc.h"
 
 #define MAX_INTERBYTE	10	//ms between bytes that causes a disconnect
 
@@ -356,6 +357,15 @@ u8 cks_add8(u8 *data, unsigned len) {
 	return sum;
 }
 
+u32 cmd_romcrc(u8 *chunkno) {
+	u16 chunk = (*chunkno << 8) | *(chunkno+1);
+	u32 start = chunk * 1024;
+	u32 crc;
+	crc = crc_be_8bt((u32 *) start, 1024);
+	crc = crc_be_4bt((u32 *) start, 1024);
+	return 0;
+}
+
 /* handle low-level reflash commands */
 static void cmd_flash_utils(struct iso14230_msg *msg) {
 	u8 subcommand;
@@ -377,6 +387,16 @@ static void cmd_flash_utils(struct iso14230_msg *msg) {
 	subcommand = msg->data[1];
 
 	switch(subcommand) {
+	case SIDFL_CKS1:
+		//<SID_FlASH> <SIDFL_CKS> <CH> <CL>
+		if (msg->datalen != 4) {
+			rv = 0x12;
+			goto exit_bad;
+		}
+		rv = cmd_romcrc(&msg->data[2]);
+		if (rv) goto exit_bad;
+		//TODO : return crc value
+		break;
 	case SIDFL_EB:
 		//format : <SID_FLASH> <SIDFL_EB> <BLOCKNO>
 		if (msg->datalen != 3) {

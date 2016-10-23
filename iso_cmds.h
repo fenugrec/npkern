@@ -53,5 +53,6 @@
 #define SIDFL_WB	0x02	//write n-byte block. format : <SID_FLASH> <SIDFL_WB> <A2> <A1> <A0> <D0>...<D(SIDFL_WB_DLEN -1)> <CRC>
 				// Address is <A2 A1 A0>;   CRC is calculated on address + data.
 	#define SIDFL_WB_DLEN	128	//bytes per block
+#define SIDFL_CKS1	0x03	//get hash for a 1kB chunk of the ROM (starting at <CH:CL> * 1024) : <SID_FlASH> <SIDFL_CKS> <CH> <CL>
 
 #endif
