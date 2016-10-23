@@ -357,11 +357,17 @@ u8 cks_add8(u8 *data, unsigned len) {
 	return sum;
 }
 
-u32 cmd_romcrc(u8 *chunkno) {
-	u16 chunk = (*chunkno << 8) | *(chunkno+1);
-	u32 start = chunk * 1024;
+/* compare given CRC with calculated value */
+u32 cmd_romcrc(const u8 *data) {
+	u16 test_crc = (*(data+0) << 8) | *(data+1);
+	u16 chunkno = (*(data+2) << 8) | *(data+3);
+	u32 start = chunkno * 256;
+
 	u16 crc;
-	crc = crc16((u8 *)start, 1024);
+	crc = crc16((const u8 *)start, 256);
+	if (crc != test_crc) {
+		return 0x77;	//iso14230 badchecksum
+	}
 
 	return 0;
 }
@@ -388,14 +394,13 @@ static void cmd_flash_utils(struct iso14230_msg *msg) {
 
 	switch(subcommand) {
 	case SIDFL_CKS1:
-		//<SID_FlASH> <SIDFL_CKS> <CH> <CL>
-		if (msg->datalen != 4) {
+		//<SID_FlASH> <SIDFL_CKS> <CRCH> <CRCL> <CNH> <CNL>
+		if (msg->datalen != 6) {
 			rv = 0x12;
 			goto exit_bad;
 		}
 		rv = cmd_romcrc(&msg->data[2]);
 		if (rv) goto exit_bad;
-		//TODO : return crc value
 		break;
 	case SIDFL_EB:
 		//format : <SID_FLASH> <SIDFL_EB> <BLOCKNO>
