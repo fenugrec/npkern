@@ -393,15 +393,6 @@ static void cmd_flash_utils(struct iso14230_msg *msg) {
 	subcommand = msg->data[1];
 
 	switch(subcommand) {
-	case SIDFL_CKS1:
-		//<SID_FlASH> <SIDFL_CKS> <CRCH> <CRCL> <CNH> <CNL>
-		if (msg->datalen != 6) {
-			rv = 0x12;
-			goto exit_bad;
-		}
-		rv = cmd_romcrc(&msg->data[2]);
-		if (rv) goto exit_bad;
-		break;
 	case SIDFL_EB:
 		//format : <SID_FLASH> <SIDFL_EB> <BLOCKNO>
 		if (msg->datalen != 3) {
@@ -561,6 +552,18 @@ static void cmd_conf(struct iso14230_msg *msg) {
 		if (msg->datalen != 5) goto bad12;
 		tmp = (msg->data[2] << 16) | (msg->data[3] << 8) | msg->data[4];
 		eep_setptr((void *) tmp);
+		iso_sendpkt(resp, 1);
+		return;
+		break;
+	case SID_CONF_CKS1:
+		//<SID_CONF> <SID_CONF_CKS1> <CRCH> <CRCL> <CNH> <CNL>
+		if (msg->datalen != 6) {
+			goto bad12;
+		}
+		if (cmd_romcrc(&msg->data[2])) {
+			tx_7F(SID_CONF, SID_CONF_CKS1_BADCKS);
+			return;
+		}
 		iso_sendpkt(resp, 1);
 		return;
 		break;
