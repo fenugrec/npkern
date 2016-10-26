@@ -357,16 +357,23 @@ u8 cks_add8(u8 *data, unsigned len) {
 	return sum;
 }
 
-/* compare given CRC with calculated value */
-u32 cmd_romcrc(const u8 *data) {
-	u16 test_crc = (*(data+0) << 8) | *(data+1);
-	u16 chunkno = (*(data+2) << 8) | *(data+3);
-	u32 start = chunkno * 256;
-
-	u16 crc;
-	crc = crc16((const u8 *)start, 256);
-	if (crc != test_crc) {
-		return 0x77;	//iso14230 badchecksum
+/* compare given CRC with calculated value.
+ * data is the first byte after SID_CONF_CKS1
+ */
+int cmd_romcrc(const u8 *data) {
+	unsigned idx;
+	// <CNH> <CNL> <CRC0H> <CRC0L> ...<CRC3H> <CRC3L>
+	u16 chunkno = (*(data+0) << 8) | *(data+1);
+	for (idx = 0; idx < ROMCRC_NUMCHUNKS; idx++) {
+		u16 crc;
+		data += 2;
+		u16 test_crc = (*(data+0) << 8) | *(data+1);
+		u32 start = chunkno * ROMCRC_CHUNKSIZE;
+		crc = crc16((const u8 *)start, ROMCRC_CHUNKSIZE);
+		if (crc != test_crc) {
+			return -1;
+		}
+		chunkno += 1;
 	}
 
 	return 0;
@@ -556,8 +563,8 @@ static void cmd_conf(struct iso14230_msg *msg) {
 		return;
 		break;
 	case SID_CONF_CKS1:
-		//<SID_CONF> <SID_CONF_CKS1> <CRCH> <CRCL> <CNH> <CNL>
-		if (msg->datalen != 6) {
+		//<SID_CONF> <SID_CONF_CKS1> <CNH> <CNL> <CRC0H> <CRC0L> ...<CRC3H> <CRC3L>
+		if (msg->datalen != 12) {
 			goto bad12;
 		}
 		if (cmd_romcrc(&msg->data[2])) {

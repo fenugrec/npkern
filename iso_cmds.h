@@ -46,8 +46,10 @@
 	#define SID_CONF_SETSPEED 0x01	/* set comm speed (BRR divisor reg) : <SID_CONF> <SID_CONF_SETSPEED> <new divisor> */
 			//this requires a new StartComm request at the new speed
 	#define SID_CONF_SETEEPR 0x02	/* set eeprom_read() function address <SID_CONF> <SID_CONF_SETEEPR> <AH> <AM> <AL> */
-	#define SID_CONF_CKS1	0x03	//verify if <CRCH:CRCL> hash is valid for a 256B chunk of the ROM (starting at <CNH:CNL> * 256)
-								//<SID_CONF> <SID_CONF_CKS1> <CRCH> <CRCL> <CNH> <CNL>
+	#define SID_CONF_CKS1	0x03	//verify if 4*<CRCH:CRCL> hash is valid for 4*256B chunks of the ROM (starting at <CNH:CNL> * 1024)
+								//<SID_CONF> <SID_CONF_CKS1> <CNH> <CNL> <CRC0H> <CRC0L> ...<CRC3H> <CRC3L>
+		#define ROMCRC_NUMCHUNKS 4
+		#define ROMCRC_CHUNKSIZE 256
 		#define SID_CONF_CKS1_BADCKS	0x77	//NRC when crc is bad
 
 #define SID_FLREQ 0x34	/* RequestDownload */
