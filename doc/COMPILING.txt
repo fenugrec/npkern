@@ -18,7 +18,7 @@ using the pre-compiled kernels in the "precompiled" folder will be easier. See "
 *** build options / customization
 Pretty basic at the moment.
 
-- toolchain : make sure the toolchain executable's PREFIX is set properly in the Makefile.
+- toolchain : edit Makefile to make sure the toolchain executable's PREFIX is set properly
 
 - target / CPU type. Kernels are not interchangeable because the RAM memory areas are slightly different.
 The easiest way to specify the target is to use
@@ -28,18 +28,17 @@ The easiest way to specify the target is to use
 If communications are unreliable at the default speed (currently 62.5kbps), simply modify the divisor value in "platf.h"  (SCI_DEFAULTDIV).
 Refer to the datasheet for details; typically the formula is "divisor = (20 * 1000 / (32 * speed_in_kbps)) -1".
 
-- post-write/erase verification
-POSTFLASH_VERIFY and POSTERASE_VERIFY can be set to enable verification after writing or erasing each chunk / block.
-The post-write verification will soon be enabled permanently, deprecating that option.
-The post-erase verification just checks that all bytes are indeed 0xFF; not a very useful test. 
+- post-erase verification
+POSTERASE_VERIFY can be set to enable verification after erasing each block.
+The post-erase verification just checks that all bytes are indeed 0xFF; not a very useful test.
 
 
 *** build environment
-very simple : from the command-line, 'make' and the gcc binaries should be rechable. Under Win*, I have a batch file with
+very simple : from the command-line, 'make' and the gcc binaries should be reachable. Under Win*, I have a batch file with
   set PATH=d:\dev\gcc-sh\sh-elf\bin;d:\dev\gcc-sh\sh-elf\libexec\gcc\sh-elf\4.7-GNUSH_v13.01;%PATH%
 
 
 *** compiling
-easy :  "make" 
+easy :  "make"  compile the default target
 "make clean" deletes generated files (recommended for every iteration during development)
-
+"make BUILDWHAT=SH7058"  compiles SH7058 target

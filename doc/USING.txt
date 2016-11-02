@@ -12,7 +12,7 @@ The kernel implements a type of iso14230-compliant communications, without requi
 In other words, communications are established with a simple "StartCommunications" request.
 
 The protocol is relatively simple; the commands can even be sent manually from any serious terminal software (like Realterm).
-However longer data packets (as those sent during reflashing) are tedious to craft by hand and should be left to dedicated software, like freediag/nisprog !
+However longer data packets (as those sent during reflashing) are tedious to craft by hand and should be left to dedicated software, like nisprog !
 
 
 ***** Super important notes before starting !!
@@ -23,10 +23,9 @@ However longer data packets (as those sent during reflashing) are tedious to cra
 
 
 
-***** typical setup : freediag/nisprog
-TODO : modify after "nisprog" gets forked
-Note : inside nisprog, most commands have a short help string if you add a question mark after the command name, like "set interface ?".
-For more info, refer to doc/Scantool-Manual.html , or http://freediag.sourceforge.net/Scantool-Manual.html .
+***** typical setup : nisprog
+nisprog offers an interactive, text-based interface. Most commands have a short help string if you add a question mark after the command name, like "set interface ?"
+See the nisprog docs for more details.
 
 - in the "set" submenu, make sure everything is OK. Example :
 	set
@@ -41,74 +40,53 @@ For more info, refer to doc/Scantool-Manual.html , or http://freediag.sourceforg
 	up
 - protip : add those "set" commands to your scantool.ini
 - car ignition ON (don't start the engine, and plug that battery charger !)
-	diag
-	connect
-- it may be necessary to repeat that command a few times if it fails.
-- sanity check : "np 0" should return the ECUID
-
+	nc
+- it may be necessary to repeat that command a few times if it fails. I'm working on fixing this.
+- set device type
+    setdev 1
 ***** Send + run the kernel
-- to run the kernel, you need the SID27 and SID36 keys. TODO : refer to list, until auto-key is implemented
-- syntax : "np 9 <kernel_file> <sid27key> <sid36key>"
-- example command :
-	np 9 D:\dev\npkern\npkern.bin 0x93B645A1 0x46A7EF9D
-
-***** Connect to the kernel
-- reconnect at the new speed, if applicable :
-	disconnect
-	up
-	set speed 62500
-	diag
-	connect
-- you may try "np 0", which isn't implemented but triggers a negative response from the kernel.
+    runkernel D:\dev\npkern\npkern.bin
 
 ***** important note *****
 when trying the kernel on a new ECU, it's very important that both the kernel and the communications be stable.
-- If sending "np 0" a few times eventually fails with a timeout / no response, maybe the WDT function of the kernel is inadequate and the ECU has automatically reset.
-- I recommend dumping all or parts of the ROM at least once (try " np 10 asdf.bin 0 1048576 " for a 1MB ROM). This should be pretty bulletproof.
+- I recommend dumping all or parts of the ROM at least once (try " dm asdf.bin 0 1048576 " for a 1MB ROM). This should be pretty bulletproof.
+- If comms eventually fail with a timeout / no response and nothing seems to work, maybe the WDT function of the kernel is inadequate and the ECU has automatically restarted.
 
 Of course, if any problems are encountered during those basic tests, reflashing should *not* be attempted !!
 
 ***** reflashing
 WIP, these steps may change frequently.
-- it's done block per block, so you need to have the desired block in a separate file.
-- make ABSOLUTELY sure the checksum will be ok after reflashing; more on this later. (TODO)
+- make ABSOLUTELY sure the checksum of the new ROM file is ok before reflashing; more on this later. (TODO)
+
 
 Example :
- - I have a 7058; I'd like to reflash the last block, # 15 (0x0F)
- - A 7058 ROM is 1MB, but the blocks are split non-uniformly. 
-  ( they're called "erase blocks" in the ROM chapter of the datasheet )
-  ( alternatively, refer to the "fblocks[]" array in platf_705x_180nm.c )
- - block 15 (0x0F) starts at offset 0x000E0000 in the ROM, and is 128kB in length.
+ - I have a 7058 and an awesome new ROM with a few changed bytes + checksum adjustment.
+ 
 
-- use "dd", or a hex editor, to copy that 128kB block to a file, say "blk15.bin".
- - make sure the blk15.bin file is *exactly* 128kB, i.e. 131072 bytes long.
+-- A dry run is nice to make sure everything is fine, just select 'p' ("practice mode") when prompted.
+	flrom r7058_patched.bin
+  (note, the dry run will of course fail verification at the first changed byte, since it hasn't modified the Flash memory)
 
-  (syntax for reflashing is "np 12 <block_file> <block_no> Y")
-  (omit the "Y" if you want to do a dry-run, i.e. no modifications to flash mem).
- - A dry run is nice to make sure everything is fine:
-	np 12 blk15.bin 15
-  (note, the dry run will fail verification at the first changed byte, since it hasn't modified the Flash memory)
-
- - Real reflash : check your battery charger !!! and 
-	np 12 blk15.bin 15 Y
+ - Real reflash : check your battery charger !!! same command, but answer 'y' instead of 'p'
+	flrom r7058_patched.bin
 
 
 ***** troubleshooting after reflash errors
 - copy / save the last output with all the status + error mesages.
-- usually the kernel is still running and accepting commands. To verify, try a short ROM dump, maybe "np 10 aaaa.bin 0 10000"
+- usually the kernel is still running and accepting commands. To verify, try a short ROM dump, maybe "dm aaaa.bin 0 10000"
 
-- If not, the kernel may be out of sync; for example if nisprog sends "01 3E 3F", but the kernel previously lost a byte,
+- If not, the kernel may be out of sync
+(detailed explanation: if nisprog sends "01 3E 3F", but the kernel previously lost a byte,
 then it thinks the packet is "3E 3F", which is incomplete / invalid. If this happens, the kernel's command buffer needs to be purged
-manually (TODO : purge automatically / describe how). I open realterm and send 0x00 bytes until I get a "0x7F something" response.
+manually (TODO : purge automatically / describe how?). I open realterm and send 0x00 bytes until I get a "0x7F something" response.
 
-- if comms were an issue (read timeouts, "bad duplex" errors, etc), lower the speed by changing the divisor
+- if comms were an issue (read timeouts, "bad duplex" errors, etc), try again, or lower the speed by changing the divisor
   (TODO : implement command in nisprog, currently need to send the request manually)
    "sr 0xBE 0x01 0x0A" will set the divisor to 0x0A (10), giving 56800bps. See iso_cmds.h , for SID_CONF_SETSPEED
 
 - if verification failed, try dumping the whole ROM and comparing to the desired file - maybe the writing step was successful anyway
 
-- re-try the same block, maybe with the original / stock data from the backup ROM instead.
-
+- re-try reflashing, maybe with the original / stock data from the backup ROM instead.
 
 
 
@@ -117,12 +95,12 @@ manually (TODO : purge automatically / describe how). I open realterm and send 0
  - give that location to the kernel : "sr 0xBE 0x02 <addr2> <addr1> <addr0>
    example if the function is at 0x035250 in the ROM :
 	sr 0xbe 0x02 0x03 0x52 0x50
- - use "np 10" and add "eep" at the end to specify the address is in EEPROM:
-	np 10 eeprom_dump.bin 0 512 eep
+ - use "dumpmem" but add "eep" at the end to specify the address is in EEPROM:
+	dumpmem eeprom_dump.bin 0 512 eep
 
 
 ***** All done ? reset the ECU !
-	np 11
-	disconnect
+	stopkernel
+	npdisc
  
  
