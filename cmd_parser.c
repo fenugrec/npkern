@@ -53,6 +53,19 @@ uint8_t cks_u8(const uint8_t * data, unsigned int len) {
 	return rv;
 }
 
+/* sign-extend 24bit number to 32bits,
+ * i.e. FF8000 => FFFF8000 etc
+ * data stored as big (sh) endian
+ */
+static u32 reconst_24(const u8 *data) {
+	u32 tmp;
+	tmp = (data[0] << 16) | (data[1] << 8) | data[2];
+	if (data[0] & 0x80) {
+		//sign-extend to cover RAM
+		tmp |= 0xFF << 24;
+	}
+	return tmp;
+}
 
 /** discard RX data until idle for a given time
  * @param idle : purge until interbyte > idle ms
@@ -474,11 +487,7 @@ void cmd_rmba(struct iso14230_msg *msg) {
 
 	if ((siz == 0) || (siz > 251)) goto bad12;
 
-	addr = (msg->data[1] << 16) | (msg->data[2] << 8) | msg->data[3];
-	if (msg->data[1] & 0x80) {
-		//sign-extend to cover RAM
-		addr |= 0xFF << 24;
-	}
+	addr = reconst_24(&msg->data[1]);
 
 	buf[0] = SID_RMBA + 0x40;
 	memcpy(buf + 1, (void *) addr, siz);
@@ -513,11 +522,7 @@ static void cmd_wmba(struct iso14230_msg *msg) {
 		(siz > 250) ||
 		(msg->datalen != (siz + 5))) goto badexit;
 
-	addr = (msg->data[1] << 16) | (msg->data[2] << 8) | msg->data[3];
-	if (msg->data[1] & 0x80) {
-		//sign-extend to cover RAM
-		addr |= 0xFF << 24;
-	}
+	addr = reconst_24(&msg->data[1]);
 
 	// bounds check, restrict to RAM
 	if (	(addr < RAM_MIN) ||
@@ -574,6 +579,23 @@ static void cmd_conf(struct iso14230_msg *msg) {
 		iso_sendpkt(resp, 1);
 		return;
 		break;
+#ifdef DIAG_U16READ
+	case SID_CONF_R16:
+		{
+		u8 txbuf[3];
+		u16 val;
+		//<SID_CONF> <SID_CONF_R16> <A2> <A1> <A0>
+		tmp = reconst_24(&msg->data[2]);
+		tmp &= ~1;	//clr lower bit of course
+		val = *(const u16 *) tmp;
+		txbuf[0] = SID_CONF + 0x40;
+		txbuf[1] = val >> 8;
+		txbuf[2] = val & 0xFF;
+		iso_sendpkt(txbuf,3);
+		return;
+		break;
+		}
+#endif
 	default:
 		goto bad12;
 		break;

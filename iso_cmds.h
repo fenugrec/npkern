@@ -51,6 +51,8 @@
 		#define ROMCRC_NUMCHUNKS 4
 		#define ROMCRC_CHUNKSIZE 256
 		#define SID_CONF_CKS1_BADCKS	0x77	//NRC when crc is bad
+	#define SID_CONF_R16 0x04		/* for debugging : do a 16bit access read at given adress in RAM (top byte 0xFF)
+									* <SID_CONF> <SID_CONF_R16> <A2> <A1> <A0> */
 
 #define SID_FLREQ 0x34	/* RequestDownload */
 /* SID_FLREQ (0x34 RequestDownload) neg response codes */
