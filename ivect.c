@@ -29,6 +29,7 @@ extern u32 stackinit[];
 
 // Dummy handler
 void dummy(void){
+	while (1) ;
 	return;
 	}
 
