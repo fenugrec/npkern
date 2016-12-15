@@ -546,9 +546,10 @@ badexit:
 
 /* set & configure kernel */
 static void cmd_conf(struct iso14230_msg *msg) {
-	const u8 resp[] = {SID_CONF + 0x40};
+	u8 resp[4];
 	u32 tmp;
 
+	resp[0] = SID_CONF + 0x40;
 	if (msg->datalen < 3) goto bad12;
 
 	switch (msg->data[1]) {
@@ -582,16 +583,14 @@ static void cmd_conf(struct iso14230_msg *msg) {
 #ifdef DIAG_U16READ
 	case SID_CONF_R16:
 		{
-		u8 txbuf[3];
 		u16 val;
 		//<SID_CONF> <SID_CONF_R16> <A2> <A1> <A0>
 		tmp = reconst_24(&msg->data[2]);
 		tmp &= ~1;	//clr lower bit of course
 		val = *(const u16 *) tmp;
-		txbuf[0] = SID_CONF + 0x40;
-		txbuf[1] = val >> 8;
-		txbuf[2] = val & 0xFF;
-		iso_sendpkt(txbuf,3);
+		resp[1] = val >> 8;
+		resp[2] = val & 0xFF;
+		iso_sendpkt(resp,3);
 		return;
 		break;
 		}
