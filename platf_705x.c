@@ -103,7 +103,7 @@ void init_platf(void) {
 /*
  * Assumes the wdt pin setup has already been done,
  * since host was taking care of it just before.
- * This uses Channel 1 TCNT1A, like some Nissan kernels do.
+ * This uses Channel 1 TCNTB CMF interrupt
  */
 void init_wdt(void) {
 	ATU.TSTR1.BIT.STR12B = 0;	//stop while configging
@@ -114,12 +114,10 @@ void init_wdt(void) {
 	//ATU1.TSRA.WORD = 0;
 	ATU1.TSRB.WORD = 0;
 
-	//ATU1.GRA = WDT_MAXCNT;	//use the "compare" feature => only works with TIOR set to output to a pin ? wtf
 	ATU1.OCR = WDT_MAXCNT;
-	//ATU1.TCNTA = 0;
 	ATU1.TCNTB = 0;
 	INTC.IPRD.BIT._ATU11 = 0x08;	//medium priority for ATU11_IMI1A / CM1 (same int)
-	//ATU1.TIERA.BIT.IMEA = 1;	//enable compare int with GRA
+	ATU1.TIERA.WORD = 0;	//disable other IMI1{A,B,C,D} !!
 	ATU1.TIERB.BIT.CME = 1;	//TCNTB compare match int
 
 	ATU.PSCR1.BYTE = 0x1F;	//prescaler : 1/32
