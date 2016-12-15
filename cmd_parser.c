@@ -245,7 +245,7 @@ void cmd_init(u8 brrdiv) {
 
 static void cmd_startcomm(void) {
 	// KW : noaddr;  len-in-fmt or lenbyte
-	u8 txbuf[3] = {0xC1, 0x67, 0x8F};
+	static const u8 txbuf[3] = {0xC1, 0x67, 0x8F};
 	iso_sendpkt(txbuf, 3);
 	flashstate = FL_IDLE;
 }
