@@ -27,6 +27,12 @@
 /* Uncomment to enable verification of succesful block erase . Adds 128B for the block descriptors + ~ 44B of code */
 //#define POSTERASE_VERIFY
 
+/* Uncomment to add diag function for atomic u16 reads */
+//#define DIAG_U16READ
+
+/* Uncomment to taint WDT pulse for debug use */
+//#define DIAG_TAINTWDT
+
 
 
 #include <stdbool.h>
