@@ -48,6 +48,11 @@
 #define RAM_MIN	0xFFFF6000
 #define RAM_MAX	0xFFFFDFFF
 
+#elif defined(SH7055_35)
+
+#define RAM_MIN	0xFFFF6000
+#define RAM_MAX	0xFFFFDFFF
+
 #else
 #error No target specified !
 #endif

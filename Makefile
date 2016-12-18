@@ -4,7 +4,7 @@ PREFIX=sh-elf
 
 #DBGFLAGS=-gdwarf-2
 
-#possible choices : SH7058 SH7055_18
+#possible choices : SH7058 SH7055_18 SH7055_35
 #try "make BUILDWHAT=SH7055_18" to override this default.
 BUILDWHAT ?= SH7058
 
@@ -46,9 +46,15 @@ LDSCRIPT = lkr_705x_180nm.ld
 
 
 ASRC = start_705x.s
-SRC = cmd_parser.c eep_funcs.c main.c crc.c
-SRC += platf_705x_180nm.c platf_705x.c
 
+SRC = cmd_parser.c eep_funcs.c main.c crc.c
+SRC += platf_705x.c
+
+ifeq ($(BUILDWHAT), SH7055_35)
+	SRC += platf_7055_350nm.c
+else
+	SRC += platf_705x_180nm.c
+endif
 
 OBJS  = $(ASRC:.s=.o) $(SRC:.c=.o)
 
