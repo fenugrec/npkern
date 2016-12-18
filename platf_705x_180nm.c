@@ -4,17 +4,17 @@
 
 /* (c) copyright fenugrec 2016
  * GPLv3
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -28,9 +28,30 @@
 #include "platf.h"
 #include "iso_cmds.h"
 
+/*********  Reflashing defines
+ *
+ * These are for SH7058 and SH7055 (0.18um), and assume this RAM map :
+ *
+ * - stack @ 0xFFFF BFFC (growing downwards)
+ * - kernel @ 0xFFFF 8100, this leaves ~16k for both kernel + stack
+ * and according to mcu type:
+ * - mcu's built-in erase and write programs copied @ 0xFFFF1000 or 0xFFFF7000
+ */
 
+
+/* Select area in which to download the erase + write microcode.
+ * skip 00 and 01 in case someone wants to use RAMER at some point
+ */
+
+#define FTDAR_ERASE 0x02
+#define FTDAR_WRITE 0x03
 
 #if defined(SH7058)
+#define FL_ERASE_BASE	0xFFFF1000
+#define FL_WRITE_BASE	0xFFFF1800
+
+#define FL_MAXROM	(1024*1024UL - 1UL)
+
 const struct flashblock fblocks[] = {
 	{0x00000000,	0x00001000},
 	{0x00001000,	0x00001000},
@@ -50,7 +71,15 @@ const struct flashblock fblocks[] = {
 	{0x000E0000,	0x00020000},
 };
 
+
+
 #elif defined(SH7055_18)
+
+#define FL_ERASE_BASE	0xFFFF7000
+#define FL_WRITE_BASE	0xFFFF7800
+
+#define FL_MAXROM	(512*1024UL - 1UL)
+
 const struct flashblock fblocks[] = {
 	{0x00000000,	0x00001000},
 	{0x00001000,	0x00001000},
@@ -69,10 +98,37 @@ const struct flashblock fblocks[] = {
 	{0x00060000,	0x00010000},
 	{0x00070000,	0x00010000},
 };
+
 #else
 #error No target specified !
 
-#endif	// for flashblock def
+#endif
+
+
+#define FL_FPEFEQ	(40 * 100)
+#define FL_ERASEBLOCKS	15	//EB0...EB15; see DS
+
+
+
+
+
+/* Function pointers to builtin microcodes, once "downloaded" to RAM.
+ * These protos assume that gcc follows this part of the renesas calling convention :
+ * r0 : function return value
+ * r4 : first arg
+ * r5 : second arg
+ */
+
+static uint32_t (*const fl_erase_init)(uint32_t FPEFEQ, uint32_t FUBRA) = (void *) FL_ERASE_BASE + 32;
+static uint32_t (*const fl_write_init)(uint32_t FPEFEQ, uint32_t FUBRA) = (void *) FL_WRITE_BASE + 32;
+static uint32_t (*const fl_erase)(uint32_t FEBS) = (void *) FL_ERASE_BASE + 16;
+/** FMPAR : destination in ROM;
+ * FMPDR : source data
+ */
+static uint32_t (*const fl_write)(uint32_t FMPDR, uint32_t FMPAR) = (void *) FL_WRITE_BASE + 16;
+
+
+
 
 
 
@@ -96,7 +152,7 @@ bool platf_flash_init(u8 *err) {
 		*err = SID34_BADFCCS;
 		return 0;
 	}
-	
+
 	if (FLASH.RAMER.BIT.RAMS) {
 		// RAMER enabled; can't proceed
 		*err = SID34_BADRAMER;
