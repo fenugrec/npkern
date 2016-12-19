@@ -37,14 +37,109 @@
  */
 
 
-
-
-
 #ifndef SH7055_35
 #error Wrong target specified !
 #endif
 
 #define FL_MAXROM	(512*1024UL - 1UL)
+#define FL_NUMBLOCKS 16		//EB0..15
+
+
+
+/********** Timing defs
+*/
+
+//Assume 40MHz clock. Some critical timing depends on this being true
+#define CPUFREQ	(40)
+
+
+//TODO recheck calculation
+#define WAITN_TCYCLE 4		/* clock cycles per loop, see asm */
+#define WAITN_CALCN(usec) (((usec) * CPUFREQ / WAITN_TCYCLE) + 1)
+
+
+/** Common timing constants */
+#define TSSWE	WAITN_CALCN(1)
+#define TCSWE	WAITN_CALCN(100)
+
+/** Erase timing constants */
+#define TSESU	WAITN_CALCN(100)
+#define TSE	WAITN_CALCN(10000UL)
+#define TCE	WAITN_CALCN(10)
+#define TCESU	WAITN_CALCN(10)
+#define TSEV	WAITN_CALCN(6)	/******** Renesas has 20 for this !?? */
+#define TSEVR	WAITN_CALCN(2)
+#define TCEV	WAITN_CALCN(4)
+
+
+/** Write timing constants */
+#define TSPSU	WAITN_CALCN(50)
+#define TSP10	WAITN_CALCN(10)
+#define TSP30	WAITN_CALCN(10)
+#define TSP200	WAITN_CALCN(10)
+#define TCP	WAITN_CALCN(5)
+#define TCPSU	WAITN_CALCN(5)
+#define TSPV	WAITN_CALCN(4)
+#define TSPVR	WAITN_CALCN(2)
+#define TCPV	WAITN_CALCN(2)
+
+
+/** FLASH constants */
+#define MAX_ET	100		// The number of times of the maximum erase
+#define MAX_WT	1000		// The number of times of the maximum writing
+#define OW_COUNT	6		// The number of times of additional writing
+#define BLK_MAX	16		// EB0..EB15
+#define FLMCR1_MAXBLOCK 7	//EB0..7 controlled by FLMCR1
+
+
+/** FLMCRx bit defines */
+#define FLMCR_FWE	0x80
+#define FLMCR_FLER	0x80
+#define FLMCR_SWE	0x40
+#define FLMCR_ESU	0x20
+#define FLMCR_PSU	0x10
+#define FLMCR_EV	0x08
+#define FLMCR_PV	0x04
+#define FLMCR_E	0x02
+#define FLMCR_P	0x01
+
+
+
+#ifdef ASM_IMPLEM
+/* probably dead-end attempt at porting the Renesas FDT code.
+Size with no implems: 3392	1024	536 => 4952
+Size with Erase asm implem: 4024	1024	552 => 5600, delta = 648B
+*/
+
+/** Common timing constants */
+const u32 SWES_W = WAITN_CALCN(1);
+const u32 SWEC_W = WAITN_CALCN(100);
+const u32 DLCH_W = WAITN_CALCN(2);
+
+/** Erase timing constants */
+const u32 ESUS_W = WAITN_CALCN(100);
+const u32 ESUC_W = WAITN_CALCN(10);
+const u32 ES_W = WAITN_CALCN(10000UL);
+const u32 EC_W = WAITN_CALCN(10);
+const u32 EVS_W = WAITN_CALCN(20);
+const u32 EVC_W = WAITN_CALCN(4);
+
+/** Write timing constants */
+const u32 PSUS_W = WAITN_CALCN(50);
+const u32 PSUC_W = WAITN_CALCN(5);
+const u32 P10S_W = WAITN_CALCN(10);
+const u32 P30S_W = WAITN_CALCN(30);
+const u32 P200S_W = WAITN_CALCN(200);
+const u32 PC_W = WAITN_CALCN(5);
+const u32 PVS_W = WAITN_CALCN(4);
+const u32 PVC_W = WAITN_CALCN(2);
+
+
+/** low-level asm function protos */
+u32 block_erase(u32 blockno);
+
+#else
+/* Regular implem */
 
 const struct flashblock fblocks[] = {
 	{0x00000000,	0x00001000},
@@ -64,32 +159,93 @@ const struct flashblock fblocks[] = {
 	{0x00060000,	0x00010000},
 	{0x00070000,	0x00010000},
 };
+#endif // ASM_IMPLEM
 
-#define FL_NUMBLOCKS 16		//EB0..15
-
-//Assume 40MHz clock. Some critical timing depends on this being true
-#define CPUFREQ	(40)
 
 
 
 static bool reflash_enabled = 0;	//global flag to protect flash, see platf_flash_enable()
 
 
-/*
- *
- *
+static volatile u8 *pFLMCR;	//will point to FLMCR1 or FLMCR2 as required
+
+
+/** spin for <loops> .
+ * Constants should be calculated at compile-time.
  */
+#define WAITN_TCYCLE	4	//clock cycles per loop
+
+static void waitn(unsigned loops) {
+	u32 tmp;
+	asm volatile ("0: dt %0":"=r"(tmp):"0"(loops):"cc");
+	asm volatile ("bf 0b");
+}
+
+
+
+/** Check FWE and FLER bits
+ * ret 1 if ok
+ */
+static bool fwecheck(void) {
+	if (!FLASH.FLMCR1.BIT.FWE) return 0;
+	if (FLASH.FLMCR2.BIT.FLER) return 0;
+	return 1;
+}
+
+/** Set SWE bit and wait */
+static void sweset(void) {
+	*pFLMCR |= FLMCR_SWE;
+	waitn(TSSWE);
+	return;
+}
+
+/** Clear SWE bit and wait */
+static void sweclear(void) {
+	*pFLMCR &= ~FLMCR_SWE;
+	waitn(TCSWE);
+}
+
+/** Erase verification
+ * Assumes pFLMCR is set, of course
+ * ret 1 if ok
+ */
+static bool ferasevf(unsigned blockno) {
+	bool rv = 1;
+	volatile u32 *cur, *end;
+
+	cur = (volatile u32 *) fblocks[blockno].start;
+	end = (volatile u32 *) (fblocks[blockno].start + fblocks[blockno].len);
+	for (; cur < end; cur++) {
+		*pFLMCR |= FLMCR_EV;
+		waitn(TSEV);
+		*cur = 0xFFFFFFFF;
+		waitn(TSEVR);
+		if (*cur != 0xFFFFFFFF) {
+			rv = 0;
+			break;
+		}
+	}
+	*pFLMCR &= ~FLMCR_EV;
+	waitn(TCEV);
+
+	return rv;
+}
+
+//TODO : give sane values to these & other errors
+#define FL_ERROR 0x80
+
 bool platf_flash_init(u8 *err) {
 	reflash_enabled = 0;
 
 	//Check FLER
-	//*err = asdf
+	if (!fwecheck()) {
+		*err = FL_ERROR;
+		return 0;
+	}
 
 	/* suxxess ! */
 	return 1;
 
-badexit:
-	return 0;
 }
 
 
@@ -106,7 +262,36 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	if (blockno >= FL_NUMBLOCKS) return PFEB_BADBLOCK;
 	if (!reflash_enabled) return 0;
 
-	return 0;
+#ifdef ASM_IMPLEM
+	if (block_erase(blockno)) return 0;
+#endif
+
+	if (blockno > FLMCR1_MAXBLOCK) {
+		pFLMCR = &FLASH.FLMCR1.BYTE;
+	} else {
+		pFLMCR = &FLASH.FLMCR2.BYTE;
+	}
+
+	if (!fwecheck()) {
+		return -1;
+	}
+
+	sweset();
+	//XXX WDT shit
+	//XXX etc
+	if (ferasevf(blockno)) {
+		sweclear();
+		return 0;
+	}
+
+	//XXX ferase()
+
+	if (ferasevf(blockno)) {
+		sweclear();
+		return 0;
+	}
+	sweclear();
+	return -1;
 }
 
 
@@ -114,6 +299,8 @@ uint32_t platf_flash_eb(unsigned blockno) {
  * assumes params are ok, and that block was already erased
  */
 uint32_t flash_write128(uint32_t dest, uint32_t src) {
+	(void) dest;
+	(void) src;
 	return -1;
 }
 
