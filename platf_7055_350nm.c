@@ -42,16 +42,19 @@
 #endif
 
 #define FL_MAXROM	(512*1024UL - 1UL)
-#define FL_NUMBLOCKS 16		//EB0..15
 
 
 
 /********** Timing defs
 */
 
-//Assume 40MHz clock. Some critical timing depends on this being true
+//Assume 40MHz clock. Some critical timing depends on this being true,
+//WDT stuff in particular isn't macro-fied
 #define CPUFREQ	(40)
 
+#define WDT_RSTCSR_SETTING 0x5A5F;	//power-on reset if TCNT overflows
+#define WDT_TCSR_START (0xA578 | 0x06)	//write value to start with 1:4096 div (26.2 ms @ 40MHz)
+#define WDT_TCSR_STOP 0xA558	//write value to stop WDT count
 
 //TODO recheck calculation
 #define WAITN_TCYCLE 4		/* clock cycles per loop, see asm */
@@ -141,24 +144,26 @@ u32 block_erase(u32 blockno);
 #else
 /* Regular implem */
 
-const struct flashblock fblocks[] = {
-	{0x00000000,	0x00001000},
-	{0x00001000,	0x00001000},
-	{0x00002000,	0x00001000},
-	{0x00003000,	0x00001000},
-	{0x00004000,	0x00001000},
-	{0x00005000,	0x00001000},
-	{0x00006000,	0x00001000},
-	{0x00007000,	0x00001000},
-	{0x00008000,	0x00008000},
-	{0x00010000,	0x00010000},
-	{0x00020000,	0x00010000},
-	{0x00030000,	0x00010000},
-	{0x00040000,	0x00010000},
-	{0x00050000,	0x00010000},
-	{0x00060000,	0x00010000},
-	{0x00070000,	0x00010000},
+const u32 fblocks[] = {
+	0x00000000,
+	0x00001000,
+	0x00002000,
+	0x00003000,
+	0x00004000,
+	0x00005000,
+	0x00006000,
+	0x00007000,
+	0x00008000,
+	0x00010000,
+	0x00020000,
+	0x00030000,
+	0x00040000,
+	0x00050000,
+	0x00060000,
+	0x00070000,
+	0x00080000		//last one just for delimiting the last block
 };
+
 #endif // ASM_IMPLEM
 
 
@@ -168,6 +173,7 @@ static bool reflash_enabled = 0;	//global flag to protect flash, see platf_flash
 
 
 static volatile u8 *pFLMCR;	//will point to FLMCR1 or FLMCR2 as required
+static volatile u8 *pEBR;		//similar idea, for EBR1 / EBR2
 
 
 /** spin for <loops> .
@@ -213,8 +219,9 @@ static bool ferasevf(unsigned blockno) {
 	bool rv = 1;
 	volatile u32 *cur, *end;
 
-	cur = (volatile u32 *) fblocks[blockno].start;
-	end = (volatile u32 *) (fblocks[blockno].start + fblocks[blockno].len);
+	cur = (volatile u32 *) fblocks[blockno];
+	end = (volatile u32 *) fblocks[blockno + 1];
+
 	for (; cur < end; cur++) {
 		*pFLMCR |= FLMCR_EV;
 		waitn(TSEV);
@@ -230,6 +237,42 @@ static bool ferasevf(unsigned blockno) {
 
 	return rv;
 }
+
+
+
+/* pFLMCR and pEBR must be set;
+ * blockno validated <= 15 of course
+ */
+static void ferase(unsigned blockno) {
+	unsigned bitsel;
+
+	bitsel = 1;
+	blockno &= 0x07;	//keep 3 bits for EB0..7 or EB8..15
+	while (blockno) {
+		bitsel <<= 1;
+		blockno -= 1;
+	}
+	*pEBR = bitsel;
+
+	WDT.WRITE.TCSR = WDT_TCSR_STOP;	//this also clears TCNT
+	WDT.WRITE.TCSR = WDT_TCSR_START;
+
+	*pFLMCR |= FLMCR_ESU;
+	waitn(TSESU);
+	*pFLMCR |= FLMCR_E;	//start Erase pulse
+	waitn(TSE);
+	*pFLMCR &= ~FLMCR_E;	//stop pulse
+	waitn(TCE);
+	*pFLMCR &= ~FLMCR_ESU;
+	waitn(TCESU);
+
+	WDT.WRITE.TCSR = WDT_TCSR_STOP;
+
+	*pEBR = 0;
+
+}
+
+
 
 //TODO : give sane values to these & other errors
 #define FL_ERROR 0x80
@@ -258,18 +301,22 @@ void platf_flash_unprotect(void) {
 #define PFEB_BADBLOCK (0x84 | 0x00)
 #define PFEB_VERIFAIL (0x84 | 0x01)
 uint32_t platf_flash_eb(unsigned blockno) {
+	unsigned count;
 
-	if (blockno >= FL_NUMBLOCKS) return PFEB_BADBLOCK;
+	if (blockno >= BLK_MAX) return PFEB_BADBLOCK;
 	if (!reflash_enabled) return 0;
 
 #ifdef ASM_IMPLEM
 	if (block_erase(blockno)) return 0;
-#endif
+	return -1;
+#else
 
 	if (blockno > FLMCR1_MAXBLOCK) {
 		pFLMCR = &FLASH.FLMCR1.BYTE;
+		pEBR = &FLASH.EBR1.BYTE;
 	} else {
 		pFLMCR = &FLASH.FLMCR2.BYTE;
+		pEBR = &FLASH.EBR2.BYTE;
 	}
 
 	if (!fwecheck()) {
@@ -277,21 +324,28 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	}
 
 	sweset();
-	//XXX WDT shit
+	WDT.WRITE.TCSR = WDT_TCSR_STOP;
+	WDT.WRITE.RSTCSR = WDT_RSTCSR_SETTING;
+
 	//XXX etc
 	if (ferasevf(blockno)) {
+		//already blank
 		sweclear();
 		return 0;
 	}
 
-	//XXX ferase()
 
-	if (ferasevf(blockno)) {
-		sweclear();
-		return 0;
+	for (count = 0; count < MAX_ET; count++) {
+		ferase(blockno);
+		if (ferasevf(blockno)) {
+			sweclear();
+			return 0;
+		}
 	}
+	/* haven't managed to get a succesful ferasevf() : badexit */
 	sweclear();
 	return -1;
+#endif
 }
 
 
