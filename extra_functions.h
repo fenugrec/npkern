@@ -27,7 +27,7 @@ extern __inline__ unsigned imask_savedisable() {
 		"ldc   %1, sr"
 			:"=r"(val),"=r"(tmp)
 			:
-			:"cc","r0"
+			:"r0"
 	);
 
 	return val;
@@ -46,6 +46,6 @@ extern __inline__ void imask_restore(unsigned unshifted_mask) {
 		"ldc   r0,sr"
 			:"=r"(tmp2)
 			:"r" (unshifted_mask)
-			:"r0", "cc"
+			:"r0"
 	);
 }

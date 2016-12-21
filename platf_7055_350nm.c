@@ -49,6 +49,14 @@
  */
 
 
+/* I did attempt to port the Renesas FDT code to GNU as. Little/nothing to be gained
+sh-elf-size with no implems: 3392	1024	536 => 4952
+sh-elf-size with Erase asm implem: 4024	1024	552 => 5600, delta = 648B
+sh-elf-size with Erase C implem: 3924	1024	548	=> 5496, delta = 544B
+sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
+*/
+
+
 #include "functions.h"
 #include "extra_functions.h"
 #include "reg_defines/7055_350nm.h"	//io peripheral regs etc
@@ -138,44 +146,6 @@
 #define FLMCR_P	0x01
 
 
-
-#ifdef ASM_IMPLEM
-/* probably dead-end attempt at porting the Renesas FDT code. Little/nothing to be gained
-Size with no implems: 3392	1024	536 => 4952
-Size with Erase asm implem: 4024	1024	552 => 5600, delta = 648B
-Size with Erase C implem: 3924	1024	548	=> 5496
-*/
-
-/** Common timing constants */
-const u32 SWES_W = WAITN_CALCN(1);
-const u32 SWEC_W = WAITN_CALCN(100);
-const u32 DLCH_W = WAITN_CALCN(2);
-
-/** Erase timing constants */
-const u32 ESUS_W = WAITN_CALCN(100);
-const u32 ESUC_W = WAITN_CALCN(10);
-const u32 ES_W = WAITN_CALCN(10000UL);
-const u32 EC_W = WAITN_CALCN(10);
-const u32 EVS_W = WAITN_CALCN(20);
-const u32 EVC_W = WAITN_CALCN(4);
-
-/** Write timing constants */
-const u32 PSUS_W = WAITN_CALCN(50);
-const u32 PSUC_W = WAITN_CALCN(5);
-const u32 P10S_W = WAITN_CALCN(10);
-const u32 P30S_W = WAITN_CALCN(30);
-const u32 P200S_W = WAITN_CALCN(200);
-const u32 PC_W = WAITN_CALCN(5);
-const u32 PVS_W = WAITN_CALCN(4);
-const u32 PVC_W = WAITN_CALCN(2);
-
-
-/** low-level asm function protos */
-u32 block_erase(u32 blockno);
-
-#else
-/* Regular implem */
-
 const u32 fblocks[] = {
 	0x00000000,
 	0x00001000,
@@ -195,8 +165,6 @@ const u32 fblocks[] = {
 	0x00070000,
 	0x00080000		//last one just for delimiting the last block
 };
-
-#endif // ASM_IMPLEM
 
 
 
@@ -318,11 +286,6 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	if (blockno >= BLK_MAX) return PFEB_BADBLOCK;
 	if (!reflash_enabled) return 0;
 
-#ifdef ASM_IMPLEM
-	if (block_erase(blockno)) return 0;
-	return -1;
-#else
-
 	if (blockno > FLMCR1_MAXBLOCK) {
 		pFLMCR = &FLASH.FLMCR1.BYTE;
 		pEBR = &FLASH.EBR1.BYTE;
@@ -361,7 +324,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	/* haven't managed to get a succesful ferasevf() : badexit */
 	sweclear();
 	return -1;
-#endif
+
 }
 
 
