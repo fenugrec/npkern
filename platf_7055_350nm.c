@@ -478,12 +478,13 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 	if (dest & 0x7F) return PFWB_MISALIGNED;	//dest not aligned on 128B boundary
 	if (len & 0x7F) return PFWB_LEN;	//must be multiple of 128B too
 
+	if (!reflash_enabled) return 0;	//pretend success
+
 	while (len) {
 		uint32_t rv = 0;
 
-		if (reflash_enabled) {
-			rv = flash_write128(dest, src);
-		}
+		rv = flash_write128(dest, src);
+
 		if (rv) {
 			return rv;	//TODO : tweak into valid NRC
 		}
