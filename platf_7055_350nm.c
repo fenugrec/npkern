@@ -131,7 +131,7 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #define MAX_WT	1000		// The number of times of the maximum writing
 #define OW_COUNT	6		// The number of times of additional writing
 #define BLK_MAX	16		// EB0..EB15
-#define FLMCR1_MAXBLOCK 7	//EB0..7 controlled by FLMCR1
+#define FLMCR2_LIMIT 0x40000 //40000 - 7FFFF controlled by FLMCR2
 
 
 /** FLMCRx bit defines */
@@ -171,9 +171,7 @@ const u32 fblocks[] = {
 
 static bool reflash_enabled = 0;	//global flag to protect flash, see platf_flash_enable()
 
-
 static volatile u8 *pFLMCR;	//will point to FLMCR1 or FLMCR2 as required
-static volatile u8 *pEBR;		//similar idea, for EBR1 / EBR2
 
 
 /** spin for <loops> .
@@ -243,19 +241,21 @@ static bool ferasevf(unsigned blockno) {
 
 
 
-/* pFLMCR and pEBR must be set;
+/* pFLMCR must be set;
  * blockno validated <= 15 of course
  */
 static void ferase(unsigned blockno) {
 	unsigned bitsel;
 
 	bitsel = 1;
-	blockno &= 0x07;	//keep 3 bits for EB0..7 or EB8..15
 	while (blockno) {
 		bitsel <<= 1;
 		blockno -= 1;
 	}
-	*pEBR = bitsel;
+
+	FLASH.EBR2.BYTE = 0;	//to ensure we don't have > 1 bit set simultaneously
+	FLASH.EBR1.BYTE = bitsel & 0xFF;	//EB0..7
+	FLASH.EBR2.BYTE = (bitsel >> 8) & 0xFF;	//EB8..15
 
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;	//this also clears TCNT
 	WDT.WRITE.TCSR = WDT_TCSR_ESTART;
@@ -271,7 +271,8 @@ static void ferase(unsigned blockno) {
 
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 
-	*pEBR = 0;
+	FLASH.EBR1.BYTE = 0;
+	FLASH.EBR2.BYTE = 0;
 
 }
 
@@ -286,12 +287,10 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	if (blockno >= BLK_MAX) return PFEB_BADBLOCK;
 	if (!reflash_enabled) return 0;
 
-	if (blockno > FLMCR1_MAXBLOCK) {
-		pFLMCR = &FLASH.FLMCR1.BYTE;
-		pEBR = &FLASH.EBR1.BYTE;
-	} else {
+	if (fblocks[blockno] >= FLMCR2_LIMIT) {
 		pFLMCR = &FLASH.FLMCR2.BYTE;
-		pEBR = &FLASH.EBR2.BYTE;
+	} else {
+		pFLMCR = &FLASH.FLMCR1.BYTE;
 	}
 
 	if (!fwecheck()) {
@@ -331,12 +330,20 @@ uint32_t platf_flash_eb(unsigned blockno) {
 
 /*********** Write ***********/
 
-/** write pulse for tps=10/30/200us as specified
+/** Copy 128-byte chunk + apply write pulse for tps=10/30/200us as specified
  */
-static void writepulse(unsigned tsp) {
+static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 //	int prev_imask = get_imask();
 //	set_imask(0x0F);
-	unsigned uim = imask_savedisable();
+	unsigned uim;
+	u32 cur;
+
+	//can't use memcpy because these must be byte transfers
+	for (cur = 0; cur < 128; cur++) {
+		dest[cur] = src[cur];
+	}
+
+	uim = imask_savedisable();
 
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 	WDT.WRITE.TCSR = WDT_TCSR_WSTART;
@@ -359,14 +366,14 @@ static void writepulse(unsigned tsp) {
 /** ret 0 if ok,
  * assumes params are ok, and that block was already erased
  */
-u32 flash_write128(u32 dest, u32 src) {
+static u32 flash_write128(u32 dest, u32 src) {
 	u8 reprog[128] __attribute ((aligned (4)));	// retry / reprogram data
 	u8 addit[128] __attribute ((aligned (4)));	// overwrite / additional data
 	unsigned n;
 	bool m;
 	u32 rv;
 
-	if (dest < fblocks[FLMCR1_MAXBLOCK + 1]) {
+	if (dest < FLMCR2_LIMIT) {
 		pFLMCR = &FLASH.FLMCR1.BYTE;
 	} else {
 		pFLMCR = &FLASH.FLMCR2.BYTE;
@@ -388,27 +395,24 @@ u32 flash_write128(u32 dest, u32 src) {
 
 		m = 0;
 
-		//1) write (latch) to flash, can't use memcpy because this must be u8 transfers
-		for (cur = 0; cur < 128; cur++) {
-			*(volatile u8 *) (dest + cur) = reprog[cur];
-		}
+		//1) write (latch) to flash, with 30/200us pulse
 
 		if (n <= OW_COUNT) {
-			writepulse(TSP30);
+			writepulse((volatile u8 *)dest, reprog, TSP30);
 		} else {
-			writepulse(TSP200);
+			writepulse((volatile u8 *)dest, reprog, TSP200);
 		}
 
 		//2) Program verify
 		*pFLMCR |= FLMCR_PV;
 		waitn(TSPV);
 
-
 		for (cur = 0; cur < 128; cur += 4) {
 			u32 verifdata;
 			u32 srcdata;
 
-			*(volatile u32 *) (dest + cur) = (u32) -1;	//dummy write 0xFFFFFFFF
+			//dummy write 0xFFFFFFFF
+			*(volatile u32 *) (dest + cur) = (u32) -1;
 			waitn(TSPVR);
 
 			verifdata = *(volatile u32 *) (dest + cur);
@@ -441,12 +445,8 @@ u32 flash_write128(u32 dest, u32 src) {
 		waitn(TCPV);
 
 		if (n <= 6) {
-			// write additional repro data; can't use memcpy because this must be u8 transfers
-			for (cur = 0; cur < 128; cur++) {
-				*(volatile u8 *) (dest + cur) = addit[cur];
-			}
-
-			writepulse(TSP10);
+			// write additional reprog data
+			writepulse((volatile u8 *) dest, addit, TSP10);
 		}
 
 
