@@ -20,10 +20,9 @@ extern __inline__ unsigned imask_savedisable() {
 	asm volatile (
 		"stc   sr,%0\n"
 		"mov   %0, %1\n"
-		"mov   #0xff,r0\n"
-		"add   #0x10, r0\n"
+		"mov   #0xF0, r0\n"
+		"extu.b r0, r0\n"	//r0 = 0000 00F0
 		"and   r0, %0\n"
-		"not   r0, r0\n"
 		"or    r0, %1\n"
 		"ldc   %1, sr"
 			:"=r"(val),"=r"(tmp)
@@ -34,13 +33,14 @@ extern __inline__ unsigned imask_savedisable() {
 	return val;
 }
 
-	
+
 extern __inline__ void imask_restore(unsigned unshifted_mask) {
 	volatile unsigned tmp2;
 	asm volatile (
 		"stc   sr,r0\n"
 		"mov   #0xff,%0\n"
-		"add   #0x10, %0\n"		//r0 = FFFF FF0F
+		"shll8 %0\n"
+		"add   #0x0F, %0\n"
 		"and   %0,r0\n"
 		"or    %1,r0\n"
 		"ldc   r0,sr"
