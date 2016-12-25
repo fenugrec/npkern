@@ -26,690 +26,176 @@
 
 
 
-
 #define ISR __attribute__ ((interrupt_handler))
 
-extern void dummy(void) ISR;
-//#define WEAKALIAS __attribute__ ((weak, alias ("dummy")))
-#define WEAKALIAS
 
-//;<<VECTOR DATA START (POWER ON RESET)>>
-//;0 Power On Reset PC
-extern void WEAKALIAS PowerON_Reset_PC(void) ISR;
+/** Define vector number for each */
+#define	IVTN_PowerON_Reset_PC	(0x00000000 / 4)
+#define IVTN_POR_SP	(0x00000004 / 4)
+#define	IVTN_Manual_Reset_PC	(0x00000008 / 4)
+#define IVTN_MR_SP	(0x0000000C / 4)
+#define	IVTN_INT_Illegal_code	(0x00000010 / 4)
+#define	IVTN_INT_Illegal_slot	(0x00000018 / 4)
+#define	IVTN_INT_CPU_Address	(0x00000024 / 4)
+#define	IVTN_INT_DMAC_Address	(0x00000028 / 4)
+#define	IVTN_INT_NMI	(0x0000002C / 4)
+#define	IVTN_INT_User_Break	(0x00000030 / 4)
+#define	IVTN_INT_FPU	(0x00000034 / 4)
+#define	IVTN_INT_HUDI	(0x00000038 / 4)
+#define	IVTN_INT_TRAPA32	(0x00000080 / 4)
+#define	IVTN_INT_TRAPA33	(0x00000084 / 4)
+#define	IVTN_INT_TRAPA34	(0x00000088 / 4)
+#define	IVTN_INT_TRAPA35	(0x0000008c / 4)
+#define	IVTN_INT_TRAPA36	(0x00000090 / 4)
+#define	IVTN_INT_TRAPA37	(0x00000094 / 4)
+#define	IVTN_INT_TRAPA38	(0x00000098 / 4)
+#define	IVTN_INT_TRAPA39	(0x0000009c / 4)
+#define	IVTN_INT_TRAPA40	(0x000000a0 / 4)
+#define	IVTN_INT_TRAPA41	(0x000000a4 / 4)
+#define	IVTN_INT_TRAPA42	(0x000000a8 / 4)
+#define	IVTN_INT_TRAPA43	(0x000000ac / 4)
+#define	IVTN_INT_TRAPA44	(0x000000b0 / 4)
+#define	IVTN_INT_TRAPA45	(0x000000b4 / 4)
+#define	IVTN_INT_TRAPA46	(0x000000b8 / 4)
+#define	IVTN_INT_TRAPA47	(0x000000bc / 4)
+#define	IVTN_INT_TRAPA48	(0x000000c0 / 4)
+#define	IVTN_INT_TRAPA49	(0x000000c4 / 4)
+#define	IVTN_INT_TRAPA50	(0x000000c8 / 4)
+#define	IVTN_INT_TRAPA51	(0x000000cc / 4)
+#define	IVTN_INT_TRAPA52	(0x000000d0 / 4)
+#define	IVTN_INT_TRAPA53	(0x000000d4 / 4)
+#define	IVTN_INT_TRAPA54	(0x000000d8 / 4)
+#define	IVTN_INT_TRAPA55	(0x000000dc / 4)
+#define	IVTN_INT_TRAPA56	(0x000000e0 / 4)
+#define	IVTN_INT_TRAPA57	(0x000000e4 / 4)
+#define	IVTN_INT_TRAPA58	(0x000000e8 / 4)
+#define	IVTN_INT_TRAPA59	(0x000000ec / 4)
+#define	IVTN_INT_TRAPA60	(0x000000f0 / 4)
+#define	IVTN_INT_TRAPA61	(0x000000f4 / 4)
+#define	IVTN_INT_TRAPA62	(0x000000f8 / 4)
+#define	IVTN_INT_TRAPA63	(0x000000fc / 4)
+#define	IVTN_INT_IRQ0	(0x00000100 / 4)
+#define	IVTN_INT_IRQ1	(0x00000104 / 4)
+#define	IVTN_INT_IRQ2	(0x00000108 / 4)
+#define	IVTN_INT_IRQ3	(0x0000010c / 4)
+#define	IVTN_INT_IRQ4	(0x00000110 / 4)
+#define	IVTN_INT_IRQ5	(0x00000114 / 4)
+#define	IVTN_INT_IRQ6	(0x00000118 / 4)
+#define	IVTN_INT_IRQ7	(0x0000011c / 4)
+#define	IVTN_INT_DMAC0_DEI0	(0x00000120 / 4)
+#define	IVTN_INT_DMAC1_DEI1	(0x00000128 / 4)
+#define	IVTN_INT_DMAC2_DEI2	(0x00000130 / 4)
+#define	IVTN_INT_DMAC3_DEI3	(0x00000138 / 4)
+#define	IVTN_INT_ATU01_ITV	(0x00000140 / 4)
+#define	IVTN_INT_ATU02_ICI0A	(0x00000150 / 4)
+#define	IVTN_INT_ATU02_ICI0B	(0x00000158 / 4)
+#define	IVTN_INT_ATU03_ICI0C	(0x00000160 / 4)
+#define	IVTN_INT_ATU03_ICI0D	(0x00000168 / 4)
+#define	IVTN_INT_ATU04_OVI0	(0x00000170 / 4)
+#define	IVTN_INT_ATU11_IMI1A	(0x00000180 / 4)
+#define	IVTN_INT_ATU11_IMI1B	(0x00000184 / 4)
+#define	IVTN_INT_ATU11_IMI1C	(0x00000188 / 4)
+#define	IVTN_INT_ATU11_IMI1D	(0x0000018c / 4)
+#define	IVTN_INT_ATU12_IMI1E	(0x00000190 / 4)
+#define	IVTN_INT_ATU12_IMI1F	(0x00000194 / 4)
+#define	IVTN_INT_ATU12_IMI1G	(0x00000198 / 4)
+#define	IVTN_INT_ATU12_IMI1H	(0x0000019c / 4)
+#define	IVTN_INT_ATU13_OVI1	(0x000001a0 / 4)
+#define	IVTN_INT_ATU21_IMI2A	(0x000001b0 / 4)
+#define	IVTN_INT_ATU21_IMI2B	(0x000001b4 / 4)
+#define	IVTN_INT_ATU21_IMI2C	(0x000001b8 / 4)
+#define	IVTN_INT_ATU21_IMI2D	(0x000001bc / 4)
+#define	IVTN_INT_ATU22_IMI2E	(0x000001c0 / 4)
+#define	IVTN_INT_ATU22_IMI2F	(0x000001c4 / 4)
+#define	IVTN_INT_ATU22_IMI2G	(0x000001c8 / 4)
+#define	IVTN_INT_ATU22_IMI2H	(0x000001cc / 4)
+#define	IVTN_INT_ATU23_OVI2	(0x000001d0 / 4)
+#define	IVTN_INT_ATU31_IMI3A	(0x000001e0 / 4)
+#define	IVTN_INT_ATU31_IMI3B	(0x000001e4 / 4)
+#define	IVTN_INT_ATU31_IMI3C	(0x000001e8 / 4)
+#define	IVTN_INT_ATU31_IMI3D	(0x000001ec / 4)
+#define	IVTN_INT_ATU32_OVI3	(0x000001f0 / 4)
+#define	IVTN_INT_ATU41_IMI4A	(0x00000200 / 4)
+#define	IVTN_INT_ATU41_IMI4B	(0x00000204 / 4)
+#define	IVTN_INT_ATU41_IMI4C	(0x00000208 / 4)
+#define	IVTN_INT_ATU41_IMI4D	(0x0000020c / 4)
+#define	IVTN_INT_ATU42_OVI4	(0x00000210 / 4)
+#define	IVTN_INT_ATU51_IMI5A	(0x00000220 / 4)
+#define	IVTN_INT_ATU51_IMI5B	(0x00000224 / 4)
+#define	IVTN_INT_ATU51_IMI5C	(0x00000228 / 4)
+#define	IVTN_INT_ATU51_IMI5D	(0x0000022c / 4)
+#define	IVTN_INT_ATU52_OVI5	(0x00000230 / 4)
+#define	IVTN_INT_ATU6_IMI6A	(0x00000240 / 4)
+#define	IVTN_INT_ATU6_IMI6B	(0x00000244 / 4)
+#define	IVTN_INT_ATU6_IMI6C	(0x00000248 / 4)
+#define	IVTN_INT_ATU6_IMI6D	(0x0000024c / 4)
+#define	IVTN_INT_ATU7_IMI7A	(0x00000250 / 4)
+#define	IVTN_INT_ATU7_IMI7B	(0x00000254 / 4)
+#define	IVTN_INT_ATU7_IMI7C	(0x00000258 / 4)
+#define	IVTN_INT_ATU7_IMI7D	(0x0000025c / 4)
+#define	IVTN_INT_ATU81_OSI8A	(0x00000260 / 4)
+#define	IVTN_INT_ATU81_OSI8B	(0x00000264 / 4)
+#define	IVTN_INT_ATU81_OSI8C	(0x00000268 / 4)
+#define	IVTN_INT_ATU81_OSI8D	(0x0000026c / 4)
+#define	IVTN_INT_ATU82_OSI8E	(0x00000270 / 4)
+#define	IVTN_INT_ATU82_OSI8F	(0x00000274 / 4)
+#define	IVTN_INT_ATU82_OSI8G	(0x00000278 / 4)
+#define	IVTN_INT_ATU82_OSI8H	(0x0000027c / 4)
+#define	IVTN_INT_ATU83_OSI8I	(0x00000280 / 4)
+#define	IVTN_INT_ATU83_OSI8J	(0x00000284 / 4)
+#define	IVTN_INT_ATU83_OSI8K	(0x00000288 / 4)
+#define	IVTN_INT_ATU83_OSI8L	(0x0000028c / 4)
+#define	IVTN_INT_ATU84_OSI8M	(0x00000290 / 4)
+#define	IVTN_INT_ATU84_OSI8N	(0x00000294 / 4)
+#define	IVTN_INT_ATU84_OSI8O	(0x00000298 / 4)
+#define	IVTN_INT_ATU84_OSI8P	(0x0000029c / 4)
+#define	IVTN_INT_ATU91_CMI9A	(0x000002a0 / 4)
+#define	IVTN_INT_ATU91_CMI9B	(0x000002a4 / 4)
+#define	IVTN_INT_ATU91_CMI9C	(0x000002a8 / 4)
+#define	IVTN_INT_ATU91_CMI9D	(0x000002ac / 4)
+#define	IVTN_INT_ATU92_CMI9E	(0x000002b0 / 4)
+#define	IVTN_INT_ATU92_CMI9F	(0x000002b8 / 4)
+#define	IVTN_INT_ATU101_CMI10A	(0x000002c0 / 4)
+#define	IVTN_INT_ATU101_CMI10B	(0x000002c8 / 4)
+#define	IVTN_INT_ATU102_IMI10AG	(0x000002d0 / 4)
+#define	IVTN_INT_ATU11_IMI11A	(0x000002e0 / 4)
+#define	IVTN_INT_ATU11_IMI11B	(0x000002e8 / 4)
+#define	IVTN_INT_ATU11_OVI1	(0x000002ec / 4)
+#define	IVTN_INT_CMT0_CMTI0	(0x000002f0 / 4)
+#define	IVTN_INT_ADI0	(0x000002f8 / 4)
+#define	IVTN_INT_CMT1_CMTI1	(0x00000300 / 4)
+#define	IVTN_INT_AD1_ADI1	(0x00000308 / 4)
+#define	IVTN_INT_AD2_ADI2	(0x00000310 / 4)
+#define	IVTN_INT_SCI0_ERI0	(0x00000320 / 4)
+#define	IVTN_INT_SCI0_RXI0	(0x00000324 / 4)
+#define	IVTN_INT_SCI0_TXI0	(0x00000328 / 4)
+#define	IVTN_INT_SCI0_TEI0	(0x0000032c / 4)
+#define	IVTN_INT_SCI1_ERI1	(0x00000330 / 4)
+#define	IVTN_INT_SCI1_RXI1	(0x00000334 / 4)
+#define	IVTN_INT_SCI1_TXI1	(0x00000338 / 4)
+#define	IVTN_INT_SCI1_TEI1	(0x0000033c / 4)
+#define	IVTN_INT_SCI2_ERI2	(0x00000340 / 4)
+#define	IVTN_INT_SCI2_RXI2	(0x00000344 / 4)
+#define	IVTN_INT_SCI2_TXI2	(0x00000348 / 4)
+#define	IVTN_INT_SCI2_TEI2	(0x0000034c / 4)
+#define	IVTN_INT_SCI3_ERI3	(0x00000350 / 4)
+#define	IVTN_INT_SCI3_RXI3	(0x00000354 / 4)
+#define	IVTN_INT_SCI3_TXI3	(0x00000358 / 4)
+#define	IVTN_INT_SCI3_TEI3	(0x0000035c / 4)
+#define	IVTN_INT_SCI4_ERI4	(0x00000360 / 4)
+#define	IVTN_INT_SCI4_RXI4	(0x00000364 / 4)
+#define	IVTN_INT_SCI4_TXI4	(0x00000368 / 4)
+#define	IVTN_INT_SCI4_TEI4	(0x0000036c / 4)
+#define	IVTN_INT_HCAN0_ERS0	(0x00000370 / 4)
+#define	IVTN_INT_HCAN0_OVR0	(0x00000374 / 4)
+#define	IVTN_INT_HCAN0_RM0	(0x00000378 / 4)
+#define	IVTN_INT_HCAN0_SLE0	(0x0000037c / 4)
+#define	IVTN_INT_WDT_ITI	(0x00000380 / 4)
+#define	IVTN_INT_HCAN1_ERS1	(0x00000390 / 4)
+#define	IVTN_INT_HCAN1_OVR1	(0x00000394 / 4)
+#define	IVTN_INT_HCAN1_RM1	(0x00000398 / 4)
+#define	IVTN_INT_HCAN1_SLE1	(0x0000039c / 4)
 
-//;<<VECTOR DATA END (POWER ON RESET)>>
-// 1 Power On Reset SP
 
-//;<<VECTOR DATA START (MANUAL RESET)>>
-//;2 Manual Reset PC
-extern void WEAKALIAS Manual_Reset_PC(void) ISR;
-
-//;<<VECTOR DATA END (MANUAL RESET)>>
-// 3 Manual Reset SP
-
-// 4 Illegal code
-extern void WEAKALIAS INT_Illegal_code(void) ISR;
-
-// 5 Reserved
-
-// 6 Illegal slot
-extern void WEAKALIAS INT_Illegal_slot(void) ISR;
-
-// 7 Reserved
-
-// 8 Reserved
-
-// 9 CPU Address error
-extern void WEAKALIAS INT_CPU_Address(void) ISR;
-
-// 10 DMAC Address error
-extern void WEAKALIAS INT_DMAC_Address(void) ISR;
-
-// 11 NMI
-extern void WEAKALIAS INT_NMI(void) ISR;
-
-// 12 User breakpoint trap
-extern void WEAKALIAS INT_User_Break(void) ISR;
-
-// 13 FPU
-extern void WEAKALIAS INT_FPU(void) ISR;
-
-// 14 H-UDI
-extern void WEAKALIAS INT_HUDI(void) ISR;
-
-// 15 Reserved
-
-// 16 Reserved
-
-// 17 Reserved
-
-// 18 Reserved
-
-// 19 Reserved
-
-// 20 Reserved
-
-// 21 Reserved
-
-// 22 Reserved
-
-// 23 Reserved
-
-// 24 Reserved
-
-// 25 Reserved
-
-// 26 Reserved
-
-// 27 Reserved
-
-// 28 Reserved
-
-// 29 Reserved
-
-// 30 Reserved
-
-// 31 Reserved
-
-// 32 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA32(void) ISR;
-
-// 33 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA33(void) ISR;
-
-// 34 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA34(void) ISR;
-
-// 35 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA35(void) ISR;
-
-// 36 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA36(void) ISR;
-
-// 37 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA37(void) ISR;
-
-// 38 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA38(void) ISR;
-
-// 39 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA39(void) ISR;
-
-// 40 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA40(void) ISR;
-
-// 41 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA41(void) ISR;
-
-// 42 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA42(void) ISR;
-
-// 43 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA43(void) ISR;
-
-// 44 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA44(void) ISR;
-
-// 45 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA45(void) ISR;
-
-// 46 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA46(void) ISR;
-
-// 47 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA47(void) ISR;
-
-// 48 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA48(void) ISR;
-
-// 49 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA49(void) ISR;
-
-// 50 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA50(void) ISR;
-
-// 51 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA51(void) ISR;
-
-// 52 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA52(void) ISR;
-
-// 53 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA53(void) ISR;
-
-// 54 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA54(void) ISR;
-
-// 55 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA55(void) ISR;
-
-// 56 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA56(void) ISR;
-
-// 57 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA57(void) ISR;
-
-// 58 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA58(void) ISR;
-
-// 59 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA59(void) ISR;
-
-// 60 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA60(void) ISR;
-
-// 61 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA61(void) ISR;
-
-// 62 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA62(void) ISR;
-
-// 63 TRAPA (User Vecter)
-extern void WEAKALIAS INT_TRAPA63(void) ISR;
-
-// 64 Interrupt IRQ0
-extern void WEAKALIAS INT_IRQ0(void) ISR;
-
-// 65 Interrupt IRQ1
-extern void WEAKALIAS INT_IRQ1(void) ISR;
-
-// 66 Interrupt IRQ2
-extern void WEAKALIAS INT_IRQ2(void) ISR;
-
-// 67 Interrupt IRQ3
-extern void WEAKALIAS INT_IRQ3(void) ISR;
-
-// 68 Interrupt IRQ4
-extern void WEAKALIAS INT_IRQ4(void) ISR;
-
-// 69 Interrupt IRQ5
-extern void WEAKALIAS INT_IRQ5(void) ISR;
-
-// 70 Interrupt IRQ6
-extern void WEAKALIAS INT_IRQ6(void) ISR;
-
-// 71 Interrupt IRQ7
-extern void WEAKALIAS INT_IRQ7(void) ISR;
-
-// 72 DMAC0 DEI0
-extern void WEAKALIAS INT_DMAC0_DEI0(void) ISR;
-
-// 73 Reserved
-
-// 74 DMAC1 DEI1
-extern void WEAKALIAS INT_DMAC1_DEI1(void) ISR;
-
-// 75 Reserved
-
-// 76 DMAC2 DEI2
-extern void WEAKALIAS INT_DMAC2_DEI2(void) ISR;
-
-// 77 Reserved
-
-// 78 DMAC3 DEI3
-extern void WEAKALIAS INT_DMAC3_DEI3(void) ISR;
-
-// 79 Reserved
-
-// 80 ATU01 ITV1/ITV2A/ITV2B
-extern void WEAKALIAS INT_ATU01_ITV(void) ISR;
-
-// 81 Reserved
-
-// 82 Reserved
-
-// 83 Reserved
-
-// 84 ATU02 ICI0A
-extern void WEAKALIAS INT_ATU02_ICI0A(void) ISR;
-
-// 85 Reserved
-
-// 86 ATU02 ICI0B
-extern void WEAKALIAS INT_ATU02_ICI0B(void) ISR;
-
-// 87 Reserved
-
-// 88 ATU03 ICI0C
-extern void WEAKALIAS INT_ATU03_ICI0C(void) ISR;
-
-// 89 Reserved
-
-// 90 ATU03 ICI0D
-extern void WEAKALIAS INT_ATU03_ICI0D(void) ISR;
-
-// 91 Reserved
-
-// 92 ATU04 OVI0
-extern void WEAKALIAS INT_ATU04_OVI0(void) ISR;
-
-// 93 Reserved
-
-// 94 Reserved
-
-// 95 Reserved
-
-// 96 ATU11 IMI1A/CMI1
-extern void WEAKALIAS INT_ATU11_IMI1A(void) ISR;
-
-// 97 ATU11 IMI1B
-extern void WEAKALIAS INT_ATU11_IMI1B(void) ISR;
-
-// 98 ATU11 IMI1C
-extern void WEAKALIAS INT_ATU11_IMI1C(void) ISR;
-
-// 99 ATU11 IMI1D
-extern void WEAKALIAS INT_ATU11_IMI1D(void) ISR;
-
-// 100 ATU12 IMI1E
-extern void WEAKALIAS INT_ATU12_IMI1E(void) ISR;
-
-// 101 ATU12 IMI1F
-extern void WEAKALIAS INT_ATU12_IMI1F(void) ISR;
-
-// 102 ATU12 IMI1G
-extern void WEAKALIAS INT_ATU12_IMI1G(void) ISR;
-
-// 103 ATU12 IMI1H
-extern void WEAKALIAS INT_ATU12_IMI1H(void) ISR;
-
-// 104 ATU13 OVI1A/OVI1B
-extern void WEAKALIAS INT_ATU13_OVI1(void) ISR;
-
-// 105 Reserved
-
-// 106 Reserved
-
-// 107 Reserved
-
-// 108 ATU21 IMI2A/CMI2A
-extern void WEAKALIAS INT_ATU21_IMI2A(void) ISR;
-
-// 109 ATU21 IMI2B/CMI2B
-extern void WEAKALIAS INT_ATU21_IMI2B(void) ISR;
-
-// 110 ATU21 IMI2C/CMI2C
-extern void WEAKALIAS INT_ATU21_IMI2C(void) ISR;
-
-// 111 ATU21 IMI2D/CMI2D
-extern void WEAKALIAS INT_ATU21_IMI2D(void) ISR;
-
-// 112 ATU22 IMI2E/CMI2E
-extern void WEAKALIAS INT_ATU22_IMI2E(void) ISR;
-
-// 113 ATU22 IMI2F/CMI2F
-extern void WEAKALIAS INT_ATU22_IMI2F(void) ISR;
-
-// 114 ATU22 IMI2G/CMI2G
-extern void WEAKALIAS INT_ATU22_IMI2G(void) ISR;
-
-// 115 ATU22 IMI2H/CMI2H
-extern void WEAKALIAS INT_ATU22_IMI2H(void) ISR;
-
-// 116 ATU23 OVI2A/OVI2B
-extern void WEAKALIAS INT_ATU23_OVI2(void) ISR;
-
-// 117 Reserved
-
-// 118 Reserved
-
-// 119 Reserved
-
-// 120 ATU31 IMI3A
-extern void WEAKALIAS INT_ATU31_IMI3A(void) ISR;
-
-// 121 ATU31 IMI3B
-extern void WEAKALIAS INT_ATU31_IMI3B(void) ISR;
-
-// 122 ATU31 IMI3C
-extern void WEAKALIAS INT_ATU31_IMI3C(void) ISR;
-
-// 123 ATU31 IMI3D
-extern void WEAKALIAS INT_ATU31_IMI3D(void) ISR;
-
-// 124 ATU32 OVI3
-extern void WEAKALIAS INT_ATU32_OVI3(void) ISR;
-
-// 125 Reserved
-
-// 126 Reserved
-
-// 127 Reserved
-
-// 128 ATU41 IMI4A
-extern void WEAKALIAS INT_ATU41_IMI4A(void) ISR;
-
-// 129 ATU41 IMI4B
-extern void WEAKALIAS INT_ATU41_IMI4B(void) ISR;
-
-// 130 ATU41 IMI4C
-extern void WEAKALIAS INT_ATU41_IMI4C(void) ISR;
-
-// 131 ATU41 IMI4D
-extern void WEAKALIAS INT_ATU41_IMI4D(void) ISR;
-
-// 132 ATU42 OVI4
-extern void WEAKALIAS INT_ATU42_OVI4(void) ISR;
-
-// 133 Reserved
-
-// 134 Reserved
-
-// 135 Reserved
-
-// 136 ATU51 IMI5A
-extern void WEAKALIAS INT_ATU51_IMI5A(void) ISR;
-
-// 137 ATU51 IMI5B
-extern void WEAKALIAS INT_ATU51_IMI5B(void) ISR;
-
-// 138 ATU51 IMI5C
-extern void WEAKALIAS INT_ATU51_IMI5C(void) ISR;
-
-// 139 ATU51 IMI5D
-extern void WEAKALIAS INT_ATU51_IMI5D(void) ISR;
-
-// 140 ATU52 OVI5
-extern void WEAKALIAS INT_ATU52_OVI5(void) ISR;
-
-// 141 Reserved
-
-// 142 Reserved
-
-// 143 Reserved
-
-// 144 ATU6 CMI6A
-extern void WEAKALIAS INT_ATU6_CMI6A(void) ISR;
-
-// 145 ATU6 CMI6B
-extern void WEAKALIAS INT_ATU6_CMI6B(void) ISR;
-
-// 146 ATU6 CMI6C
-extern void WEAKALIAS INT_ATU6_CMI6C(void) ISR;
-
-// 147 ATU6 CMI6D
-extern void WEAKALIAS INT_ATU6_CMI6D(void) ISR;
-
-// 148 ATU7 CMI7A
-extern void WEAKALIAS INT_ATU7_CMI7A(void) ISR;
-
-// 149 ATU7 CMI7B
-extern void WEAKALIAS INT_ATU7_CMI7B(void) ISR;
-
-// 150 ATU7 CMI7C
-extern void WEAKALIAS INT_ATU7_CMI7C(void) ISR;
-
-// 151 ATU7 CMI7D
-extern void WEAKALIAS INT_ATU7_CMI7D(void) ISR;
-
-// 152 ATU81 OSI8A
-extern void WEAKALIAS INT_ATU81_OSI8A(void) ISR;
-
-// 153 ATU81 OSI8B
-extern void WEAKALIAS INT_ATU81_OSI8B(void) ISR;
-
-// 154 ATU81 OSI8C
-extern void WEAKALIAS INT_ATU81_OSI8C(void) ISR;
-
-// 155 ATU81 OSI8D
-extern void WEAKALIAS INT_ATU81_OSI8D(void) ISR;
-
-// 156 ATU82 OSI8E
-extern void WEAKALIAS INT_ATU82_OSI8E(void) ISR;
-
-// 157 ATU82 OSI8F
-extern void WEAKALIAS INT_ATU82_OSI8F(void) ISR;
-
-// 158 ATU82 OSI8G
-extern void WEAKALIAS INT_ATU82_OSI8G(void) ISR;
-
-// 159 ATU82 OSI8H
-extern void WEAKALIAS INT_ATU82_OSI8H(void) ISR;
-
-// 160 ATU83 OSI8I
-extern void WEAKALIAS INT_ATU83_OSI8I(void) ISR;
-
-// 161 ATU83 OSI8J
-extern void WEAKALIAS INT_ATU83_OSI8J(void) ISR;
-
-// 162 ATU83 OSI8K
-extern void WEAKALIAS INT_ATU83_OSI8K(void) ISR;
-
-// 163 ATU83 OSI8L
-extern void WEAKALIAS INT_ATU83_OSI8L(void) ISR;
-
-// 164 ATU84 OSI8M
-extern void WEAKALIAS INT_ATU84_OSI8M(void) ISR;
-
-// 165 ATU84 OSI8N
-extern void WEAKALIAS INT_ATU84_OSI8N(void) ISR;
-
-// 166 ATU84 OSI8O
-extern void WEAKALIAS INT_ATU84_OSI8O(void) ISR;
-
-// 167 ATU84 OSI8P
-extern void WEAKALIAS INT_ATU84_OSI8P(void) ISR;
-
-// 168 ATU91 CMI9A
-extern void WEAKALIAS INT_ATU91_CMI9A(void) ISR;
-
-// 169 ATU91 CMI9B
-extern void WEAKALIAS INT_ATU91_CMI9B(void) ISR;
-
-// 170 ATU91 CMI9C
-extern void WEAKALIAS INT_ATU91_CMI9C(void) ISR;
-
-// 171 ATU91 CMI9D
-extern void WEAKALIAS INT_ATU91_CMI9D(void) ISR;
-
-// 172 ATU92 CMI9E
-extern void WEAKALIAS INT_ATU92_CMI9E(void) ISR;
-
-// 173 Reserved
-
-// 174 ATU92 CMI9F
-extern void WEAKALIAS INT_ATU92_CMI9F(void) ISR;
-
-// 175 Reserved
-
-// 176 ATU101 CMI10A
-extern void WEAKALIAS INT_ATU101_CMI10A(void) ISR;
-
-// 177 Reserved
-
-// 178 ATU101 CMI10B
-extern void WEAKALIAS INT_ATU101_CMI10B(void) ISR;
-
-// 179 Reserved
-
-// 180 ATU102 ICI10A/CMI10G
-extern void WEAKALIAS INT_ATU102_ICI10A(void) ISR;
-
-// 181 Reserved
-
-// 182 Reserved
-
-// 183 Reserved
-
-// 184 ATU11 IMI11A
-extern void WEAKALIAS INT_ATU11_IMI11A(void) ISR;
-
-// 185 Reserved
-
-// 186 ATU11 IMI11B
-extern void WEAKALIAS INT_ATU11_IMI11B(void) ISR;
-
-// 187 ATU11 OVI11
-extern void WEAKALIAS INT_ATU11_OVI11(void) ISR;
-
-// 188 CMT0 CMTI0
-extern void WEAKALIAS INT_CMT0_CMTI0(void) ISR;
-
-// 189 Reserved
-
-// 190 A/D0 ADI0
-extern void WEAKALIAS INT_AD0_ADI0(void) ISR;
-
-// 191 Reserved
-
-// 192 CMT1 CMTI1
-extern void WEAKALIAS INT_CMT1_CMTI1(void) ISR;
-
-// 193 Reserved
-
-// 194 A/D1 ADI1
-extern void WEAKALIAS INT_AD1_ADI1(void) ISR;
-
-// 195 Reserved
-
-// 196 A/D2 ADI2
-extern void WEAKALIAS INT_AD2_ADI2(void) ISR;
-
-// 197 Reserved
-
-// 198 Reserved
-
-// 199 Reserved
-
-// 200 SCI0 ERI0
-extern void WEAKALIAS INT_SCI0_ERI0(void) ISR;
-
-// 201 SCI0 RXI0
-extern void WEAKALIAS INT_SCI0_RXI0(void) ISR;
-
-// 202 SCI0 TXI0
-extern void WEAKALIAS INT_SCI0_TXI0(void) ISR;
-
-// 203 SCI0 TEI0
-extern void WEAKALIAS INT_SCI0_TEI0(void) ISR;
-
-// 204 SCI1 ERI1
-extern void WEAKALIAS INT_SCI1_ERI1(void) ISR;
-
-// 205 SCI1 RXI1
-extern void WEAKALIAS INT_SCI1_RXI1(void) ISR;
-
-// 206 SCI1 TXI1
-extern void WEAKALIAS INT_SCI1_TXI1(void) ISR;
-
-// 207 SCI1 TEI1
-extern void WEAKALIAS INT_SCI1_TEI1(void) ISR;
-
-// 208 SCI2 ERI2
-extern void WEAKALIAS INT_SCI2_ERI2(void) ISR;
-
-// 209 SCI2 RXI2
-extern void WEAKALIAS INT_SCI2_RXI2(void) ISR;
-
-// 210 SCI2 TXI2
-extern void WEAKALIAS INT_SCI2_TXI2(void) ISR;
-
-// 211 SCI2 TEI2
-extern void WEAKALIAS INT_SCI2_TEI2(void) ISR;
-
-// 212 SCI3 ERI3
-extern void WEAKALIAS INT_SCI3_ERI3(void) ISR;
-
-// 213 SCI3 RXI3
-extern void WEAKALIAS INT_SCI3_RXI3(void) ISR;
-
-// 214 SCI3 TXI3
-extern void WEAKALIAS INT_SCI3_TXI3(void) ISR;
-
-// 215 SCI3 TEI3
-extern void WEAKALIAS INT_SCI3_TEI3(void) ISR;
-
-// 216 SCI4 ERI4
-extern void WEAKALIAS INT_SCI4_ERI4(void) ISR;
-
-// 217 SCI4 RXI4
-extern void WEAKALIAS INT_SCI4_RXI4(void) ISR;
-
-// 218 SCI4 TXI4
-extern void WEAKALIAS INT_SCI4_TXI4(void) ISR;
-
-// 219 SCI4 TEI4
-extern void WEAKALIAS INT_SCI4_TEI4(void) ISR;
-
-// 220 HCAN0 ERS0
-extern void WEAKALIAS INT_HCAN0_ERS0(void) ISR;
-
-// 221 HCAN0 OVR0
-extern void WEAKALIAS INT_HCAN0_OVR0(void) ISR;
-
-// 222 HCAN0 RM0
-extern void WEAKALIAS INT_HCAN0_RM0(void) ISR;
-
-// 223 HCAN0 SLE0
-extern void WEAKALIAS INT_HCAN0_SLE0(void) ISR;
-
-// 224 WDT ITI
-extern void WEAKALIAS INT_WDT_ITI(void) ISR;
-
-// 225 Reserved
-
-// 226 Reserved
-
-// 227 Reserved
-
-// 228 HCAN1 ERS1
-extern void WEAKALIAS INT_HCAN1_ERS1(void) ISR;
-
-// 229 HCAN1 OVR1
-extern void WEAKALIAS INT_HCAN1_OVR1(void) ISR;
-
-// 230 HCAN1 RM1
-extern void WEAKALIAS INT_HCAN1_RM1(void) ISR;
-
-// 231 HCAN1 SLE1
-extern void WEAKALIAS INT_HCAN1_SLE1(void) ISR;
-
-// 232 Reserved
-
-// 233 Reserved
-
-// 234 Reserved
-
-// 235 Reserved
-
-// 236 Reserved
-
-// 237 Reserved
-
-// 238 Reserved
-
-// 239 Reserved
-
-// 240 Reserved
-
-// 241 Reserved
-
-// 242 Reserved
-
-// 243 Reserved
-
-// 244 Reserved
-
-// 245 Reserved
-
-// 246 Reserved
-
-// 247 Reserved
-
-// 248 Reserved
-
-// 249 Reserved
-
-// 250 Reserved
-
-// 251 Reserved
-
-// 252 Reserved
-
-// 253 Reserved
-
-// 254 Reserved
-
-// 255 Reserved
 
 #endif

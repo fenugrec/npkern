@@ -38,7 +38,25 @@ static void init_sci(void) {
 	return;
 }
 
+
+/******* Interrupt stuff */
 void die(void);
+void wdt_tog(void);
+
+/** WDT toggle interrupt
+ *
+ * clr timer and flag, easy
+ */
+void INT_ATU11_IMI1A(void) ISR;
+void INT_ATU11_IMI1A(void) {
+
+	wdt_tog();
+	//ATU1.TCNTA = 0;
+	ATU1.TCNTB = 0;
+	//ATU1.TSRA.BIT.IMFA = 0 ;
+	ATU1.TSRB.BIT.CMF = 0;	//TCNT1B compare match
+	return;
+}
 
 // Dummy ISR handler
 void dummy(void){
@@ -57,11 +75,11 @@ void dummy(void){
 #define IVT_DEFAULTENTRY ((u32) &dummy)
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
 
-extern u32 stackinit[];	/* ptr set at linkage */
 u32 ivt[IVT_ENTRIES];
 
+extern u32 stackinit[];	/* ptr set at linkage */
 
-/** Builds an IVT
+/** Build an IVT
  */
 static void build_ivt(u32 *dest) {
 	unsigned i;
@@ -73,10 +91,29 @@ static void build_ivt(u32 *dest) {
 
 #define WRITEVECT(vectno, ptr) dest[vectno] = (u32) (ptr)
 
-	WRITEVECT(1, stackinit);
-	WRITEVECT(3, stackinit);
-	WRITEVECT(96, &INT_ATU11_IMI1A);
+	WRITEVECT(IVTN_POR_SP, stackinit);
+	WRITEVECT(IVTN_MR_SP, stackinit);
+	WRITEVECT(IVTN_INT_ATU11_IMI1A, &INT_ATU11_IMI1A);
 
+}
+
+
+/** init interrupts : set all prios to 0, set vbr */
+static void init_ints(void) {
+	INTC.IPRA.WORD = 0;
+	INTC.IPRB.WORD = 0;
+	INTC.IPRC.WORD = 0;
+	INTC.IPRD.WORD = 0;
+	INTC.IPRE.WORD = 0;
+	INTC.IPRF.WORD = 0;
+	INTC.IPRG.WORD = 0;
+	INTC.IPRH.WORD = 0;
+	INTC.IPRI.WORD = 0;
+	INTC.IPRJ.WORD = 0;
+	INTC.IPRK.WORD = 0;
+	INTC.IPRL.WORD = 0;
+	set_vbr((void *) ivt);
+	return;
 }
 
 
@@ -107,25 +144,6 @@ uint32_t get_mclk_ts(void) {
 	return ATU0.TCNT;
 }
 #endif
-
-
-/** init interrupts : set all prios to 0, set vbr */
-static void init_ints(void) {
-	INTC.IPRA.WORD = 0;
-	INTC.IPRB.WORD = 0;
-	INTC.IPRC.WORD = 0;
-	INTC.IPRD.WORD = 0;
-	INTC.IPRE.WORD = 0;
-	INTC.IPRF.WORD = 0;
-	INTC.IPRG.WORD = 0;
-	INTC.IPRH.WORD = 0;
-	INTC.IPRI.WORD = 0;
-	INTC.IPRJ.WORD = 0;
-	INTC.IPRK.WORD = 0;
-	INTC.IPRL.WORD = 0;
-	set_vbr((void *) ivt);
-	return;
-}
 
 
 
