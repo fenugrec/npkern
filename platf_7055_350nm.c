@@ -402,8 +402,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 	WDT.WRITE.RSTCSR = WDT_RSTCSR_SETTING;
 
-	n = 1;
-	while (n < MAX_WT) {
+	for (n=1; n < MAX_WT; n++) {
 		unsigned cur;
 
 		m = 0;
@@ -462,7 +461,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 		}
 
 
-	}	//while n < 1000
+	}	//for (n < 1000)
 
 	if (!m) {
 		//success
