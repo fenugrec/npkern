@@ -2,17 +2,17 @@
 
 /* (c) copyright fenugrec 2016
  * GPLv3
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -133,7 +133,7 @@ void iso_sendpkt(const uint8_t *buf, int len) {
 	cks += cks_u8(buf, len);
 	sci_txblock(&cks, 1);	//cks
 
-	//ugly : wait for transmission end; this means re-enabling RX won't pick up a partial byte 
+	//ugly : wait for transmission end; this means re-enabling RX won't pick up a partial byte
 	while (!SCI1.SSR.BIT.TEND) {}
 
 	SCI1.SCR.BIT.RE = 1;
@@ -228,14 +228,14 @@ enum iso_prc iso_parserx(struct iso14230_msg *msg, u8 newbyte) {
 
 
 /* Command state machine */
-enum t_cmdsm {
+static enum t_cmdsm {
 	CM_IDLE,		//not initted, only accepts the "startComm" request
 	CM_READY,		//initted, accepts all commands
 
 } cmstate;
 
 /* flash state machine */
-enum t_flashsm {
+static enum t_flashsm {
 	FL_IDLE,
 	FL_READY,	//after doing init.
 } flashstate;
@@ -273,7 +273,7 @@ static void cmd_startcomm(void) {
  *
  * ex.: "00 00 02 00 01" dumps 64 bytes @ EEPROM 0x20 (== address 0x10 in 93C66)
  * ex.: "01 80 00 00 00" dumps 1MB of ROM@ 0x0
- * 
+ *
  */
 static void cmd_dump(struct iso14230_msg *msg) {
 	u32 addr;
@@ -312,7 +312,7 @@ static void cmd_dump(struct iso14230_msg *msg) {
 				eep_read16((uint8_t) addr + ecur, (uint16_t *)&ebuf[ecur]);
 			}
 			iso_sendpkt(pstart, pktlen + 1);
-			
+
 			len -= pktlen;
 			addr += (pktlen / 2);	//work in eeprom addresses
 		}
@@ -337,7 +337,7 @@ static void cmd_dump(struct iso14230_msg *msg) {
 		tx_7F(SID_DUMP, 0x12);
 		break;
 	}	//switch (space)
-	
+
 	return;
 }
 
@@ -514,11 +514,11 @@ static void cmd_wmba(struct iso14230_msg *msg) {
 	u32 addr;
 	u8 siz;
 	u8 *src;
-	
+
 	if (msg->datalen < 6) goto badexit;
 	siz = msg->data[4];
 
-	if (	(siz == 0) || 
+	if (	(siz == 0) ||
 		(siz > 250) ||
 		(msg->datalen != (siz + 5))) goto badexit;
 
