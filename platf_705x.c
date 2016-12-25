@@ -60,19 +60,8 @@ void dummy(void){
 extern u32 stackinit[];	/* ptr set at linkage */
 u32 ivt[IVT_ENTRIES];
 
-/** This defines one vector to be "filled" in the IVT */
-struct vectordef {
-	u32 vectno;	/* Index (in entries, not # bytes) within IVT, i.e. POR_SP would be 1 */
-	u32 ptr;	/* value to write in vector, i.e. POR could be 0x00000104 */
-};
 
-static const struct vectordef vectors[] = {
-	{1, (u32) stackinit},
-	{3, (u32) stackinit},
-	{96, (u32) &INT_ATU11_IMI1A},
-};
-
-/** parses the vectors[] array and builds an IVT.
+/** Builds an IVT
  */
 static void build_ivt(u32 *dest) {
 	unsigned i;
@@ -82,12 +71,12 @@ static void build_ivt(u32 *dest) {
 		dest[i] = IVT_DEFAULTENTRY;
 	}
 
-	// Parse vectors[]
-	for (i = 0; i < ARRAY_SIZE(vectors); i++) {
-		unsigned idx = vectors[i].vectno;
-		dest[idx] = vectors[i].ptr;
-	}
-	return;
+#define WRITEVECT(vectno, ptr) dest[vectno] = (u32) (ptr)
+
+	WRITEVECT(1, stackinit);
+	WRITEVECT(3, stackinit);
+	WRITEVECT(96, &INT_ATU11_IMI1A);
+
 }
 
 
