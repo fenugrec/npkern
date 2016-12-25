@@ -7,17 +7,17 @@
 
 /* (c) copyright fenugrec 2016
  * GPLv3
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -38,6 +38,60 @@ static void init_sci(void) {
 	return;
 }
 
+void die(void);
+
+// Dummy ISR handler
+void dummy(void){
+	die();
+	return;
+}
+
+
+/** Runtime-generated IVT (Interrupt / exception vector table).
+ * Goal : save ~ 1kB kernel size.
+ * Unused entries are set to point to the "dummy" ISR;
+ * the vbr reg will be set to point at this table at startup, so this can be anywhere in RAM.
+ */
+
+#define IVT_ENTRIES 0x100
+#define IVT_DEFAULTENTRY ((u32) &dummy)
+#define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
+
+extern u32 stackinit[];	/* ptr set at linkage */
+u32 ivt[IVT_ENTRIES];
+
+/** This defines one vector to be "filled" in the IVT */
+struct vectordef {
+	u32 vectno;	/* Index (in entries, not # bytes) within IVT, i.e. POR_SP would be 1 */
+	u32 ptr;	/* value to write in vector, i.e. POR could be 0x00000104 */
+};
+
+static const struct vectordef vectors[] = {
+	{1, (u32) stackinit},
+	{3, (u32) stackinit},
+	{96, (u32) &INT_ATU11_IMI1A},
+};
+
+/** parses the vectors[] array and builds an IVT.
+ */
+static void build_ivt(u32 *dest) {
+	unsigned i;
+
+	// Fill IVT with dummy entries
+	for (i = 0; i < IVT_ENTRIES; i++) {
+		dest[i] = IVT_DEFAULTENTRY;
+	}
+
+	// Parse vectors[]
+	for (i = 0; i < ARRAY_SIZE(vectors); i++) {
+		unsigned idx = vectors[i].vectno;
+		dest[idx] = vectors[i].ptr;
+	}
+	return;
+}
+
+
+
 
 /** init free-running main counter, to use for timestamps etc
  * Get current timestamp with MCLK_TS
@@ -56,7 +110,7 @@ static void init_mclk(void) {
 	ATU0.ITVRR2B.BYTE = 0;	//no ADC intervals
 	ATU0.TCNT = 0;
 	ATU.TSTR1.BIT.STR0 = 1;	//and GO !
-	return;	
+	return;
 }
 
 #if 0
@@ -87,6 +141,7 @@ static void init_ints(void) {
 
 
 void init_platf(void) {
+	build_ivt(ivt);
 	init_ints();
 
 	/* stop all timers */

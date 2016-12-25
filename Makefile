@@ -17,7 +17,7 @@ AS   = $(PREFIX)-gcc -x assembler-with-cpp
 
 CP   = $(PREFIX)-objcopy
 SIZE = $(PREFIX)-size
-HEX  = $(CP) -O ihex 
+HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary -S
 
 # Specify linker to be used
@@ -46,7 +46,7 @@ LDSCRIPT = lkr_705x_180nm.ld
 
 
 ASRC = start_705x.s
-SRC = intprg.c ivect.c cmd_parser.c eep_funcs.c main.c crc.c
+SRC = intprg.c cmd_parser.c eep_funcs.c main.c crc.c
 SRC += platf_705x_180nm.c platf_705x.c
 
 
@@ -55,7 +55,7 @@ OBJS  = $(ASRC:.s=.o) $(SRC:.c=.o)
 all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
 	$(SIZE) $(PROJECT).elf
 
-	
+
 %.o: %.c
 	$(CC) -c $(CPFLAGS) -D $(BUILDWHAT) -I . $< -o $@
 
