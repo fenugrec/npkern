@@ -146,6 +146,22 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #define FLMCR_P	0x01
 
 
+/** Error code defines
+ * adjusted to fit with 180nm error codes, and double as the iso14230 NRC
+ */
+
+#define PFEB_BADBLOCK (0x84 | 0x00)	//bad block #
+#define PFEB_VERIFAIL (0x84 | 0x01)	//erase verify failed
+
+#define PFWB_OOB (0x88 | 0x00)		//dest out of bounds
+#define PFWB_MISALIGNED (0x88 | 0x01)	//dest not on 128B boundary
+#define PFWB_LEN (0x88 | 0x02)		//len not multiple of 128
+#define PFWB_VERIFAIL (0x88 | 0x03)	//post-write verify failed
+#define PFWB_MAXRET (0x88 | 0x04)	//max # of rewrite attempts
+
+#define PF_ERROR 0x80		//generic flashing error : FWE, etc
+
+
 const u32 fblocks[] = {
 	0x00000000,
 	0x00001000,
@@ -278,9 +294,6 @@ static void ferase(unsigned blockno) {
 
 
 
-//same error codes as 180nm, for convenience maybe
-#define PFEB_BADBLOCK (0x84 | 0x00)
-#define PFEB_VERIFAIL (0x84 | 0x01)
 uint32_t platf_flash_eb(unsigned blockno) {
 	unsigned count;
 
@@ -294,7 +307,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	}
 
 	if (!fwecheck()) {
-		return -1;
+		return PF_ERROR;
 	}
 
 	sweset();
@@ -363,7 +376,7 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 }
 
 
-/** ret 0 if ok,
+/** ret 0 if ok, NRC if error
  * assumes params are ok, and that block was already erased
  */
 static u32 flash_write128(u32 dest, u32 src) {
@@ -380,7 +393,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 	}
 
 	if (!fwecheck()) {
-		return -1;	//XXX
+		return PF_ERROR;
 	}
 
 	memcpy(reprog, (void *) src, 128);
@@ -432,8 +445,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 			}
 			if (srcdata & ~verifdata) {
 				//wanted '1' bits, but somehow got '0's : serious error
-				//XXXX
-				rv = -1;
+				rv = PFWB_VERIFAIL;
 				goto badexit;
 			}
 			//compute reprogramming data. This fits with my reading of both the DS and the FDT code,
@@ -458,19 +470,13 @@ static u32 flash_write128(u32 dest, u32 src) {
 		return 0;
 	}
 
-	//XXX failure (max retries or something)
-	rv = -1;
+	//failed, max # of retries
+	rv = PFWB_MAXRET;
 badexit:
 	sweclear();
 	return rv;
 }
 
-
-//defined like 180nm code
-#define PFWB_OOB (0x88 | 0x00)		//dest out of bounds
-#define PFWB_MISALIGNED (0x88 | 0x01)	//dest not on 128B boundary
-#define PFWB_LEN (0x88 | 0x02)		//len not multiple of 128
-#define PFWB_VERIFAIL (0x88 | 0x03)	//post-write verify failed
 
 uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
@@ -486,7 +492,7 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 		rv = flash_write128(dest, src);
 
 		if (rv) {
-			return rv;	//TODO : tweak into valid NRC
+			return rv;
 		}
 
 		dest += 128;
@@ -499,15 +505,13 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
 /*********** init, unprotect ***********/
 
-//TODO : give sane values to these & other errors
-#define FL_ERROR 0x80
 
 bool platf_flash_init(u8 *err) {
 	reflash_enabled = 0;
 
 	//Check FLER
 	if (!fwecheck()) {
-		*err = FL_ERROR;
+		*err = PF_ERROR;
 		return 0;
 	}
 
