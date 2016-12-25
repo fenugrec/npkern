@@ -1,5 +1,5 @@
-/* platform-specific code that implements the reflashing back-end commands
- * (see platf.h)
+/* platform-specific code (see platf.h)
+ * Implements the reflashing back-end commands for older, 350nm SH7055.
  */
 
 /* (c) copyright fenugrec 2016
@@ -25,10 +25,10 @@
  * elements are not perfectly clear.
  * Renesas FDT includes sample kernel code that *should* work, but
  * in some respects does not follow the DS, adding to the confusion. The
- * FDT code is also handwritten assembly, commented in mostly-english, so
- * the intent is not always clear.
+ * FDT code is also handwritten assembly, with sparse comments (in
+ * almost-english) so the intent is not always clear.
  *
- * Other code I've seen (Nissan kernel) is yet another interpretation of
+ * Other code I've seen (Nissan kernel) has yet another interpretation of
  * the DS, and disagrees with both FDT code and the DS on some points.
  *
  * In here, I've attempted to follow the DS to the letter, referring to
@@ -38,10 +38,10 @@
  *
  * Use of WDT peripheral : DS and FDT code use it, Nissan doesn't.
  * I currently have it in here, but I may remove it since I don't know
- * if Nissan ECUs have the WDTOVF CPU pin to anything problematic.
+ * if Nissan ECUs have the WDTOVF CPU pin wired to anything problematic.
  *
  * Computation of "additional programming data" : DS is unclear, Nissan
- * seems wrong, and FDT agrees with my reading of the DS.
+ * seems wrong, but FDT agrees with my reading of the DS.
  *
  * Delay loops : the most critical timing values are the "write pulse"
  * delays; for these I disable interrupts around the pulse so our ECU_WDT
@@ -131,7 +131,7 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #define MAX_WT	1000		// The number of times of the maximum writing
 #define OW_COUNT	6		// The number of times of additional writing
 #define BLK_MAX	16		// EB0..EB15
-#define FLMCR2_LIMIT 0x40000 //40000 - 7FFFF controlled by FLMCR2
+#define FLMCR2_BEGIN 0x40000 //40000 - 7FFFF controlled by FLMCR2
 
 
 /** FLMCRx bit defines */
@@ -287,7 +287,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	if (blockno >= BLK_MAX) return PFEB_BADBLOCK;
 	if (!reflash_enabled) return 0;
 
-	if (fblocks[blockno] >= FLMCR2_LIMIT) {
+	if (fblocks[blockno] >= FLMCR2_BEGIN) {
 		pFLMCR = &FLASH.FLMCR2.BYTE;
 	} else {
 		pFLMCR = &FLASH.FLMCR1.BYTE;
@@ -322,7 +322,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	}
 	/* haven't managed to get a succesful ferasevf() : badexit */
 	sweclear();
-	return -1;
+	return PFEB_VERIFAIL;
 
 }
 
@@ -330,7 +330,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 
 /*********** Write ***********/
 
-/** Copy 128-byte chunk + apply write pulse for tps=10/30/200us as specified
+/** Copy 128-byte chunk + apply write pulse for tsp=10/30/200us as specified
  */
 static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 //	int prev_imask = get_imask();
@@ -373,7 +373,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 	bool m;
 	u32 rv;
 
-	if (dest < FLMCR2_LIMIT) {
+	if (dest < FLMCR2_BEGIN) {
 		pFLMCR = &FLASH.FLMCR1.BYTE;
 	} else {
 		pFLMCR = &FLASH.FLMCR2.BYTE;
@@ -430,7 +430,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 				* (u32 *) (addit + cur) = verifdata | (*(u32 *) (reprog + cur));
 
 			}
-			if (src & ~verifdata) {
+			if (srcdata & ~verifdata) {
 				//wanted '1' bits, but somehow got '0's : serious error
 				//XXXX
 				rv = -1;
