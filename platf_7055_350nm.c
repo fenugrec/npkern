@@ -425,6 +425,7 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 		for (cur = 0; cur < 128; cur += 4) {
 			u32 verifdata;
 			u32 srcdata;
+			u32 just_written;
 
 			//dummy write 0xFFFFFFFF
 			*(volatile u32 *) (dest + cur) = (u32) -1;
@@ -432,8 +433,9 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 
 			verifdata = *(volatile u32 *) (dest + cur);
 			srcdata = *(u32 *) (src + cur);
+			just_written = *(u32 *) (reprog + cur);
 
-			if (verifdata != *(u32 *) (reprog + cur)) {
+			if (verifdata != just_written) {
 				//mismatch:
 				m = 1;
 			}
@@ -442,9 +444,10 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 				// compute "additional programming data"
 				// The datasheet isn't very clear about this, and interpretations vary (Nissan kernel vs FDT example)
 				// This follows what FDT does.
-				* (u32 *) (addit + cur) = verifdata | (*(u32 *) (reprog + cur));
+				* (u32 *) (addit + cur) = verifdata | just_written;
 
 			}
+
 			if (srcdata & ~verifdata) {
 				//wanted '1' bits, but somehow got '0's : serious error
 				rv = PFWB_VERIFAIL;
@@ -463,14 +466,13 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 			writepulse((volatile u8 *) dest, addit, TSP10);
 		}
 
+		if (!m) {
+			//success
+			sweclear();
+			return 0;
+		}
 
 	}	//for (n < 1000)
-
-	if (!m) {
-		//success
-		sweclear();
-		return 0;
-	}
 
 	//failed, max # of retries
 	rv = PFWB_MAXRET;
