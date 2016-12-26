@@ -367,7 +367,7 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 	waitn(tsp);
 	*pFLMCR &= ~FLMCR_P;
 	waitn(TCP);
-	*pFLMCR &= !FLMCR_PSU;
+	*pFLMCR &= ~FLMCR_PSU;
 	waitn(TCPSU);
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 
