@@ -379,9 +379,11 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 /** ret 0 if ok, NRC if error
  * assumes params are ok, and that block was already erased
  */
-static u32 flash_write128(u32 dest, u32 src) {
+static u32 flash_write128(u32 dest, u32 src_unaligned) {
+	u8 src[128] __attribute ((aligned (4)));	// aligned copy of desired data
 	u8 reprog[128] __attribute ((aligned (4)));	// retry / reprogram data
 	u8 addit[128] __attribute ((aligned (4)));	// overwrite / additional data
+
 	unsigned n;
 	bool m;
 	u32 rv;
@@ -396,6 +398,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 		return PF_ERROR;
 	}
 
+	memcpy(src, (void *) src_unaligned, 128);
 	memcpy(reprog, (void *) src, 128);
 
 	sweset();
@@ -450,7 +453,7 @@ static u32 flash_write128(u32 dest, u32 src) {
 			//compute reprogramming data. This fits with my reading of both the DS and the FDT code,
 			//but Nissan proceeds differently
             * (u32 *) (reprog + cur) = srcdata | ~verifdata;
-		}
+		}	//for (program verif)
 
 		*pFLMCR &= ~FLMCR_PV;
 		waitn(TCPV);
