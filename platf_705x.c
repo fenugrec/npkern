@@ -58,10 +58,23 @@ void INT_ATU11_IMI1A(void) {
 	return;
 }
 
-// Dummy ISR handler
-void dummy(void){
-	die();
-	return;
+// ISR handler that saves the previous PC value at the top of RAM, then dies of external WDT.
+void die_trace(void) __attribute__ ((noreturn));
+void die_trace(void) {
+	asm volatile (
+		"mov.l	@r15, r1\n"	//get previous PC val off stack
+		"stc	sr, r0\n"
+		"or	#0xF0, r0\n"
+		"ldc	r0, sr\n"
+		"0:\n"
+		"bra	0b\n"
+		"mov.l	r1, @%0\n"	//save at top-of-ram
+
+		:
+		: "r" (RAM_MAX + 1 - 4)
+		: "r0", "r1"
+	);
+	__builtin_unreachable();
 }
 
 
@@ -72,7 +85,7 @@ void dummy(void){
  */
 
 #define IVT_ENTRIES 0x100
-#define IVT_DEFAULTENTRY ((u32) &dummy)
+#define IVT_DEFAULTENTRY ((u32) &die_trace)
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
 
 u32 ivt[IVT_ENTRIES];
