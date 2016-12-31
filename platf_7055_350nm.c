@@ -81,6 +81,7 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 
 #define FL_MAXROM	(512*1024UL - 1UL)
 
+#define FLASH_180_FKEY ((volatile uint8_t *) 0xFFFFE804)	//exists only on 180nm ICs. Used for process size detection
 
 
 /********** Timing defs
@@ -160,6 +161,7 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #define PFWB_MAXRET (0x88 | 0x04)	//max # of rewrite attempts
 
 #define PF_ERROR 0x80		//generic flashing error : FWE, etc
+#define PF_SILICON 0x81	//not running on a 350nm IC
 
 
 const u32 fblocks[] = {
@@ -512,6 +514,13 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
 bool platf_flash_init(u8 *err) {
 	reflash_enabled = 0;
+
+	//Check 180nm vs 350nm : on 350nm, FKEY is undefined; 180nm has an 8bit RW register
+	*FLASH_180_FKEY = 0x33;
+	if (*FLASH_180_FKEY == 0x33) {
+		*err = PF_SILICON;
+		return 0;
+	}
 
 	//Check FLER
 	if (!fwecheck()) {
