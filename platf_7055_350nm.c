@@ -437,7 +437,7 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 			srcdata = *(u32 *) (src + cur);
 			just_written = *(u32 *) (reprog + cur);
 
-			if (verifdata != just_written) {
+			if (verifdata != srcdata) {
 				//mismatch:
 				m = 1;
 			}
