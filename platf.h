@@ -109,6 +109,7 @@ uint32_t platf_flash_eb(unsigned blockno);
  *
  * @return 0 if ok , response code ( > 0x80) if failed.
  *
+ * Note : the implementation must not assume that the src address will be 4-byte aligned !
  */
 uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len);
 
