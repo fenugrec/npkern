@@ -37,28 +37,43 @@
 
 #include <stdbool.h>
 
+/****** mcu-specific defines ******/
+/*
+ * RAMJUMP_PRELOAD_META : where the pre-ramjump metadata is stored (wdt pin, s36k2, etc)
+ * RAM_MIN, RAM_MAX : whole RAM area
+ * " #include "reg_defines/????" : i/o peripheral registers
+ */
+
 
 #if defined(SH7058)
-
-#define RAM_MIN	0xFFFF0000
-#define RAM_MAX 	0xFFFFBFFF
+	#include "reg_defines/7055_7058_180nm.h"
+	#define RAM_MIN	0xFFFF0000
+	#define RAM_MAX 	0xFFFFBFFF
+	#define RAMJUMP_PRELOAD_META 0xffff8000
 
 #elif defined(SH7055_18)
-
-#define RAM_MIN	0xFFFF6000
-#define RAM_MAX	0xFFFFDFFF
+	#include "reg_defines/7055_7058_180nm.h"
+	#define RAM_MIN	0xFFFF6000
+	#define RAM_MAX	0xFFFFDFFF
+	#define RAMJUMP_PRELOAD_META 0xffff8000
 
 #elif defined(SH7055_35)
+	#include "reg_defines/7055_350nm.h"
+	#define RAM_MIN	0xFFFF6000
+	#define RAM_MAX	0xFFFFDFFF
+	#define RAMJUMP_PRELOAD_META 0xffff8000
 
-#define RAM_MIN	0xFFFF6000
-#define RAM_MAX	0xFFFFDFFF
+#elif defined(SH7051)
+	#include "reg_defines/7051.h"
+	#define RAM_MIN	0xFFFFD800
+	#define RAM_MAX	0xFFFFFFFF
+	#define RAMJUMP_PRELOAD_META 0xffffD800
 
 #else
-#error No target specified !
+	#error No target specified !
 #endif
 
-/* where the pre-ramjump metadata is stored (wdt pin, s36k2, etc) */
-#define RAMJUMP_PRELOAD_META 0xffff8000
+
 
 /*** WDT and master clock stuff */
 #define WDT_PER_MS	2

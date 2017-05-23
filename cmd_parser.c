@@ -21,7 +21,6 @@
 
 #include <string.h>	//memcpy
 
-#include "reg_defines/7055_7058_180nm.h"	//required for SCI stuff
 #include "npk_ver.h"
 #include "platf.h"
 

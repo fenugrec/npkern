@@ -5,7 +5,7 @@ PREFIX ?= sh-elf
 
 #DBGFLAGS=-gdwarf-2
 
-#possible choices : SH7058 SH7055_18 SH7055_35
+#possible choices : SH7058 SH7055_18 SH7055_35 SH7051
 #try "make BUILDWHAT=SH7055_18" to override this default.
 BUILDWHAT ?= SH7058
 
@@ -43,8 +43,6 @@ CPFLAGS = $(CPU) $(DBGFLAGS) $(OPT) -fomit-frame-pointer -std=gnu99 -Wall -Wextr
 
 LDFLAGS = $(CPU) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(PROJECT).map,--cref,--gc-sections
 
-LDSCRIPT = lkr_705x_180nm.ld
-
 
 ASRC = start_705x.s
 
@@ -54,7 +52,18 @@ SRC += platf_705x.c
 ifeq ($(BUILDWHAT), SH7055_35)
 	SRC += platf_7055_350nm.c
 else
+ifeq ($(BUILDWHAT), SH7051)
+	SRC += platf_7051.c
+else
 	SRC += platf_705x_180nm.c
+endif
+endif
+
+
+ifeq ($(BUILDWHAT), SH7051)
+	LDSCRIPT = lkr_7051.ld
+else
+	LDSCRIPT = lkr_7055_7058.ld
 endif
 
 OBJS  = $(ASRC:.s=.o) $(SRC:.c=.o)

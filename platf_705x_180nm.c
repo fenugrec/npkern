@@ -21,7 +21,6 @@
 
 
 #include "functions.h"
-#include "reg_defines/7055_7058_180nm.h"	//io peripheral regs etc
 
 #include <string.h>	//memcmp
 #include "stypes.h"

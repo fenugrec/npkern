@@ -1,11 +1,11 @@
 /*
 *****************************************************************************
 **
-** Linker script for SH7058 and SH7055(0.18um) kernels, running from RAM.
+** Linker script for SH7051 (350nm) kernel, running from RAM.
 **	- no heap
 **	- stack at end of RAM
 **
-From GNU ld docs : 
+From GNU ld docs :
 "
 Every loadable or allocatable output section has two addresses. The ?rst is the VMA, or
 virtual memory address. This is the address the section will have when the output ?le is
@@ -21,7 +21,7 @@ LOADADDR(section) returns the LMA of <section>
 *****************************************************************************
 */
 
-/* (c) copyright fenugrec 2016
+/* (c) copyright fenugrec 2017
  * GPLv3
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -43,13 +43,12 @@ LOADADDR(section) returns the LMA of <section>
 /* Entry Point */
 ENTRY(RAMjump_entry)
 
-/* Memory areas, areas common to 7055 and 7058 */
 MEMORY {
-	RAM (xw)	: ORIGIN = 0xFFFF6000, LENGTH = 24K
-	RMETA (xr) : ORIGIN = 0xFFFF8000, LENGTH = 64
-	/* skip the area @ FFFF8000 because there's some metadata copied there */
-	RJFIX (xw)	: ORIGIN = 0xFFFF8100, LENGTH = 8K
-	
+	RAM (xw)	: ORIGIN = 0xFFFFD800, LENGTH = 10K
+	RMETA (xr) : ORIGIN = 0xFFFFD800, LENGTH = 64
+	/* skip the area @ FFFFD800 because there's some metadata copied there */
+	RJFIX (xw)	: ORIGIN = 0xFFFFD900, LENGTH = 7K
+
 }
 REGION_ALIAS("TGT", RJFIX);
 
@@ -83,7 +82,7 @@ SECTIONS
 
 
 	/* Initialized data sections */
-	.data : 
+	.data :
 	{
 		. = ALIGN(4);
 		_sdata = .;        /* create a global symbol at data start */

@@ -1,8 +1,11 @@
 /* platform-specific code (see platf.h)
- * Implements the reflashing back-end commands for older, 350nm SH7055.
+ * Implements the reflashing back-end commands for 350nm SH7051.
  */
 
-/* (c) copyright fenugrec 2016
+/*XXXX TODO !! this is just copied from the 7055_350nm code ! */
+
+
+/* (c) copyright fenugrec 2017
  * GPLv3
  *
  * This program is free software: you can redistribute it and/or modify
@@ -64,7 +67,6 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #include "stypes.h"
 #include "platf.h"
 #include "iso_cmds.h"
-#include "npk_errcodes.h"
 
 /*********  Reflashing defines
  *
@@ -75,11 +77,11 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
  */
 
 
-#ifndef SH7055_35
+#ifndef SH7051
 #error Wrong target specified !
 #endif
 
-#define FL_MAXROM	(512*1024UL - 1UL)
+#define FL_MAXROM	(256*1024UL - 1UL)
 
 #define FLASH_180_FKEY ((volatile uint8_t *) 0xFFFFE804)	//exists only on 180nm ICs. Used for process size detection
 
@@ -145,6 +147,23 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #define FLMCR_PV	0x04
 #define FLMCR_E	0x02
 #define FLMCR_P	0x01
+
+
+/** Error code defines
+ * adjusted to fit with 180nm error codes, and double as the iso14230 NRC
+ */
+
+#define PFEB_BADBLOCK (0x84 | 0x00)	//bad block #
+#define PFEB_VERIFAIL (0x84 | 0x01)	//erase verify failed
+
+#define PFWB_OOB (0x88 | 0x00)		//dest out of bounds
+#define PFWB_MISALIGNED (0x88 | 0x01)	//dest not on 128B boundary
+#define PFWB_LEN (0x88 | 0x02)		//len not multiple of 128
+#define PFWB_VERIFAIL (0x88 | 0x03)	//post-write verify failed
+#define PFWB_MAXRET (0x88 | 0x04)	//max # of rewrite attempts
+
+#define PF_ERROR 0x80		//generic flashing error : FWE, etc
+#define PF_SILICON 0x81	//not running on a 350nm IC
 
 
 const u32 fblocks[] = {
@@ -493,9 +512,11 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
 
 /*********** init, unprotect ***********/
-
+/*SABOTAGD XXXXXX*/
 
 bool platf_flash_init(u8 *err) {
+	return 0;
+
 	reflash_enabled = 0;
 
 	//Check 180nm vs 350nm : on 350nm, FKEY is undefined; 180nm has an 8bit RW register
