@@ -26,6 +26,7 @@
 
 #include "eep_funcs.h"
 #include "iso_cmds.h"
+#include "npk_errcodes.h"
 #include "crc.h"
 
 #define MAX_INTERBYTE	10	//ms between bytes that causes a disconnect

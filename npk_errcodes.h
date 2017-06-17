@@ -19,8 +19,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* SID_CONF error codes */
+#define SID_CONF_CKS1_BADCKS	0x77	//NRC when crc is bad
 
-/**** Common codes for all platforms. 
+/* SID_FLREQ (0x34 RequestDownload) neg response codes */
+#define SID34_BADFCCS	0x81
+#define SID34_BADRAMER	0x82
+#define SID34_BADDL_ERASE	0x83
+#define SID34_BADDL_WRITE	0x84
+#define SID34_BADINIT_ERASE	0x85
+#define SID34_BADINIT_WRITE	0x86
+
+
+/**** Common flash error codes for all platforms.
  * adjusted to fit with 180nm error codes (different from possible FPFR return values)
  * and double as the iso14230 NRC*/
 

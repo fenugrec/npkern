@@ -50,18 +50,10 @@
 								//<SID_CONF> <SID_CONF_CKS1> <CNH> <CNL> <CRC0H> <CRC0L> ...<CRC3H> <CRC3L>
 		#define ROMCRC_NUMCHUNKS 4
 		#define ROMCRC_CHUNKSIZE 256
-		#define SID_CONF_CKS1_BADCKS	0x77	//NRC when crc is bad
 	#define SID_CONF_R16 0x04		/* for debugging : do a 16bit access read at given adress in RAM (top byte 0xFF)
 									* <SID_CONF> <SID_CONF_R16> <A2> <A1> <A0> */
 
 #define SID_FLREQ 0x34	/* RequestDownload */
-/* SID_FLREQ (0x34 RequestDownload) neg response codes */
-#define SID34_BADFCCS	0x81
-#define SID34_BADRAMER	0x82
-#define SID34_BADDL_ERASE	0x83
-#define SID34_BADDL_WRITE	0x84
-#define SID34_BADINIT_ERASE	0x85
-#define SID34_BADINIT_WRITE	0x86
 
 #define SID_RESET 0x11	/* restart ECU */
 
