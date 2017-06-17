@@ -134,6 +134,8 @@ static uint32_t (*const fl_write)(uint32_t FMPDR, uint32_t FMPAR) = (void *) FL_
 
 static bool reflash_enabled = 0;	//global flag to protect flash, see platf_flash_enable()
 
+#define PF_SILICON 0x81	//not running on a 180nm IC
+
 /*
  *
  * Copy + initialize mcu's builtin write + erase functions.
@@ -146,6 +148,13 @@ bool platf_flash_init(u8 *err) {
 	void *vbr_save;
 
 	reflash_enabled = 0;
+
+	//Check 180nm vs 350nm : on 350nm, FKEY is undefined; 180nm has an 8bit RW register
+	FLASH.FKEY = 0x33;
+	if (FLASH.FKEY != 0x33) {
+		*err = PF_SILICON;
+		return 0;
+	}
 
 	if (FLASH.FCCS.BYTE != 0x80) {
 		//FLER bit set, or FWE pin bad level
