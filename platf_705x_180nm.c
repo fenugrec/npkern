@@ -27,6 +27,7 @@
 #include "stypes.h"
 #include "platf.h"
 #include "iso_cmds.h"
+#include "npk_errcodes.h"
 
 /*********  Reflashing defines
  *
@@ -134,7 +135,6 @@ static uint32_t (*const fl_write)(uint32_t FMPDR, uint32_t FMPAR) = (void *) FL_
 
 static bool reflash_enabled = 0;	//global flag to protect flash, see platf_flash_enable()
 
-#define PF_SILICON 0x81	//not running on a 180nm IC
 
 /*
  *
@@ -244,9 +244,6 @@ void platf_flash_unprotect(void) {
 }
 
 
-// these error codes are chosen to be different from possible FPFR return values
-#define PFEB_BADBLOCK (0x84 | 0x00)
-#define PFEB_VERIFAIL (0x84 | 0x01)
 uint32_t platf_flash_eb(unsigned blockno) {
 	uint32_t FPFR;
 
@@ -283,12 +280,6 @@ uint32_t flash_write128(uint32_t dest, uint32_t src) {
 	return FPFR;
 }
 
-
-// these error codes are chosen to be different from possible FPFR return values
-#define PFWB_OOB (0x88 | 0x00)		//dest out of bounds
-#define PFWB_MISALIGNED (0x88 | 0x01)	//dest not on 128B boundary
-#define PFWB_LEN (0x88 | 0x02)		//len not multiple of 128
-#define PFWB_VERIFAIL (0x88 | 0x03)	//post-write verify failed
 
 uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
