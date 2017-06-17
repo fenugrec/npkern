@@ -20,7 +20,7 @@
  */
 
 
-
+#define SID_RECUID	0x1A	/* readECUID , in this case kernel ID */
 #define SID_RMBA 0x23	/* ReadMemByAddress. format : <SID_RMBA> <AH> <AM> <AL> <SIZ>  , siz <= 251. */
 				/* response : <SID + 0x40> <D0>....<Dn> <AH> <AM> <AL> */
 

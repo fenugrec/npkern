@@ -1,0 +1,4 @@
+#!/bin/sh
+#output current commit hash (short)
+git log -n 1 --format=format:"#define NPK_COMMIT \"%h\"%n" HEAD
+

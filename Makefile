@@ -63,7 +63,7 @@ all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
 
 
 %.o: %.c
-	$(CC) -c $(CPFLAGS) -D $(BUILDWHAT) -I . $< -o $@
+	$(CC) -c $(CPFLAGS) -D $(BUILDWHAT) -D PLATF=\"$(BUILDWHAT)\" -I . $< -o $@
 
 %.o: %.s
 	$(AS) -c $(ASFLAGS) $< -o $@
@@ -76,6 +76,9 @@ all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
 
 %bin: %elf
 	$(BIN)  $< $@
+
+npk_commit.h:
+	git log -n 1 --format=format:"#define NPK_COMMIT \"%h\"%n" HEAD > $@
 
 .PHONY : clean
 clean:

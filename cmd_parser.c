@@ -22,6 +22,7 @@
 #include <string.h>	//memcpy
 
 #include "reg_defines/7055_7058_180nm.h"	//required for SCI stuff
+#include "npk_ver.h"
 #include "platf.h"
 
 #include "eep_funcs.h"
@@ -32,6 +33,8 @@
 #define MAX_INTERBYTE	10	//ms between bytes that causes a disconnect
 
 extern void die(void);
+
+static const u8 npk_ver_string[]=NPK_VER;
 
 /* make receiving slightly easier maybe */
 struct iso14230_msg {
@@ -670,6 +673,10 @@ void cmd_loop(void) {
 			switch (msg.data[0]) {
 			case 0x81:
 				cmd_startcomm();
+				iso_clearmsg(&msg);
+				break;
+			case SID_RECUID:
+				iso_sendpkt(npk_ver_string, sizeof(npk_ver_string));
 				iso_clearmsg(&msg);
 				break;
 			case SID_CONF:
