@@ -22,14 +22,6 @@
 /* SID_CONF error codes */
 #define SID_CONF_CKS1_BADCKS	0x77	//NRC when crc is bad
 
-/* SID_FLREQ (0x34 RequestDownload) neg response codes */
-#define SID34_BADFCCS	0x81
-#define SID34_BADRAMER	0x82
-#define SID34_BADDL_ERASE	0x83
-#define SID34_BADDL_WRITE	0x84
-#define SID34_BADINIT_ERASE	0x85
-#define SID34_BADINIT_WRITE	0x86
-
 
 /**** Common flash error codes for all platforms.
  * adjusted to fit with 180nm error codes (different from possible FPFR return values)
@@ -50,5 +42,12 @@
 #define PFWB_MAXRET (0x88 | 0x04)	//max # of rewrite attempts
 #define PF_ERROR 0x80		//generic flashing error : FWE, etc
 
+/**** 180nm SID_FLREQ ( RequestDownload) neg response codes */
+#define SID34_BADFCCS	0x81
+#define SID34_BADRAMER	0x82
+#define SID34_BADDL_ERASE	0x83
+#define SID34_BADDL_WRITE	0x84
+#define SID34_BADINIT_ERASE	0x85
+#define SID34_BADINIT_WRITE	0x86
 
 #endif	//_NPK_ERRCODES_H
