@@ -34,7 +34,10 @@
 
 extern void die(void);
 
-static const u8 npk_ver_string[]=NPK_VER;
+/* concatenate the ReadECUID positive response byte
+ * in front of the version string
+ */
+static const u8 npk_ver_string[] = SID_RECUID_PRC NPK_VER;
 
 /* make receiving slightly easier maybe */
 struct iso14230_msg {
