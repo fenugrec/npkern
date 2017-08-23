@@ -27,6 +27,7 @@
  * adjusted to fit with 180nm error codes (different from possible FPFR return values)
  * and double as the iso14230 NRC*/
 
+#define PF_ERROR 0x80		//generic flashing error : FWE, etc
 #define PF_SILICON 0x81	//Not running on correct silicon (180 / 350nm)
 
 #define PFEB_BADBLOCK (0x84 | 0x00)	//bad block #
@@ -40,7 +41,6 @@
 
 /**** 7055 (350nm) codes  */
 #define PFWB_MAXRET (0x88 | 0x04)	//max # of rewrite attempts
-#define PF_ERROR 0x80		//generic flashing error : FWE, etc
 
 /**** 180nm SID_FLREQ ( RequestDownload) neg response codes */
 #define SID34_BADFCCS	0x81
