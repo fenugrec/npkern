@@ -76,15 +76,6 @@
 #define get_mclk_ts(x) (ATU0.TCNT)
 
 
-
-/**** ROM erase block defs ****/
-struct flashblock {
-	uint32_t start;
-	uint32_t len;
-};
-
-
-
 /** Ret 1 if ok
  *
  * sets *err to a negative response code if failed
