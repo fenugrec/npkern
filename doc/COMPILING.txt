@@ -18,7 +18,8 @@ using the pre-compiled kernels in the "precompiled" folder will be easier. See "
 *** build options / customization
 Pretty basic at the moment.
 
-- toolchain : edit Makefile to make sure the toolchain executable's PREFIX is set properly
+- toolchain : if required, specify toolchain executable's PREFIX at compile time,
+e.g. "make PREFIX=sh-unknown-elf ..."
 
 - target / CPU type. Kernels are not interchangeable because the RAM memory areas are slightly different.
 The easiest way to specify the target is to use
@@ -42,3 +43,4 @@ very simple : from the command-line, 'make' and the gcc binaries should be reach
 easy :  "make"  compile the default target
 "make clean" deletes generated files (recommended for every iteration during development)
 "make BUILDWHAT=SH7058"  compiles SH7058 target
+

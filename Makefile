@@ -1,6 +1,7 @@
-#modify this to fit the prefix of the gcc toolchain binaries. i.e.
-#if gcc is installed as "sh4-none-elf-gcc", then PREFIX should be sh4-none-elf
-PREFIX=sh-elf
+#This can be changed at compile time as required by
+#the gcc toolchain binaries, i.e. if gcc is installed as
+#"sh4-none-elf-gcc", then run "make PREFIX=sh4-none-elf ..."
+PREFIX ?= sh-elf
 
 #DBGFLAGS=-gdwarf-2
 
@@ -58,7 +59,7 @@ endif
 
 OBJS  = $(ASRC:.s=.o) $(SRC:.c=.o)
 
-all: $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
+all: npk_commit.h $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
 	$(SIZE) $(PROJECT).elf
 
 
