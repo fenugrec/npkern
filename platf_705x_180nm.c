@@ -271,7 +271,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 /** ret 0 if ok, FPFR value if failed
  * assumes params are ok, and that block was already erased
  */
-uint32_t flash_write128(uint32_t dest, uint32_t src) {
+static uint32_t flash_write128(uint32_t dest, uint32_t src) {
 	uint32_t FPFR;
 
 	FLASH.FKEY = 0x5A;
