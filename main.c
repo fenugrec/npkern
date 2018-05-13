@@ -69,14 +69,6 @@ void do_wdt(void) {
 
 
 
-/* force reset by supervisor */
-void die(void) {
-	set_imask(0x0F);
-	while (1) {}
-	return;
-}
-
-
 void main(void) {
 	struct rj_preload *rjp = (struct rj_preload *)RAMJUMP_PRELOAD_META;
 

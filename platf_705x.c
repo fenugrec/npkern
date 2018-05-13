@@ -40,7 +40,6 @@ static void init_sci(void) {
 
 
 /******* Interrupt stuff */
-void die(void);
 void wdt_tog(void);
 
 /** WDT toggle interrupt
@@ -231,6 +230,20 @@ void init_wdt(void) {
 	return;
 }
 
+#define WDT_RSTCSR_SETTING 0x5A5F;	//power-on reset if TCNT overflows
+
+/*
+ * Some ECUs (VC264) don't seem to reset properly with just
+ * the external WDT.
+ * This should work on 7055_350nm, 7055/7058 180nm
+ */
+void die(void) {
+	set_imask(0x0F);
+	WDT.WRITE.RSTCSR = WDT_RSTCSR_SETTING;
+	WDT.WRITE.TCSR = (0xA578 | 0);	// clk div2 for ~ 12us overflow
+	while (1) {}
+	return;
+}
 
 /* spinloop for X millisecs */
 #if 0	//unused atm

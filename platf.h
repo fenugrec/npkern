@@ -114,6 +114,9 @@ void init_platf(void);
  */
 void init_wdt(void);
 
+/** force reset by external supervisor and/or internal WDT.
+ */
+void die(void);
 
 /** spinloop for X millisecs */
 //void waitms(unsigned ms);

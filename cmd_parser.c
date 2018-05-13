@@ -32,8 +32,6 @@
 
 #define MAX_INTERBYTE	10	//ms between bytes that causes a disconnect
 
-extern void die(void);
-
 /* concatenate the ReadECUID positive response byte
  * in front of the version string
  */
