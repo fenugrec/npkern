@@ -32,8 +32,8 @@ CPU = -m2 -mb
 OPT = -Os -ffunction-sections
 
 
-
-PROJECT = npkern
+PROJBASE = npk
+PROJECT = $(PROJBASE)_$(BUILDWHAT)
 
 #-specs=nano.specs
 
@@ -59,9 +59,8 @@ endif
 
 OBJS  = $(ASRC:.s=.o) $(SRC:.c=.o)
 
-all: npk_commit.h $(OBJS) $(PROJECT).elf $(PROJECT).hex $(PROJECT).bin
+all: npk_commit.h $(OBJS) $(PROJECT).elf $(PROJECT).bin
 	$(SIZE) $(PROJECT).elf
-
 
 %.o: %.c
 	$(CC) -c $(CPFLAGS) -D $(BUILDWHAT) -D PLATF=\"$(BUILDWHAT)\" -I . $< -o $@
@@ -85,10 +84,9 @@ npk_commit.h:
 clean:
 	-rm -f $(OBJS)
 	-rm -f $(SRC:.c=.su)
-	-rm -f  $(PROJECT).elf
-	-rm -f  $(PROJECT).map
-	-rm -f  $(PROJECT).hex
-	-rm -f  $(PROJECT).bin
+	-rm -f  $(PROJBASE)_*.elf
+	-rm -f  $(PROJBASE)_*.map
+	-rm -f  $(PROJBASE)_*.bin
 	-rm -f  $(SRC:.c=.c.bak)
 	-rm -f  $(SRC:.c=.lst)
 	-rm -f  $(ASRC:.s=.s.bak)
