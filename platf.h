@@ -6,18 +6,6 @@
 /* (c) copyright fenugrec 2016-2020
  * GPLv3
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 
@@ -50,24 +38,28 @@
 	#define RAM_MIN	0xFFFF0000
 	#define RAM_MAX 	0xFFFFBFFF
 	#define RAMJUMP_PRELOAD_META 0xffff8000
+	#define NPK_SCI SCI1
 
 #elif defined(SH7055_18)
 	#include "reg_defines/7055_7058_180nm.h"
 	#define RAM_MIN	0xFFFF6000
 	#define RAM_MAX	0xFFFFDFFF
 	#define RAMJUMP_PRELOAD_META 0xffff8000
+	#define NPK_SCI SCI1
 
 #elif defined(SH7055_35)
 	#include "reg_defines/7055_350nm.h"
 	#define RAM_MIN	0xFFFF6000
 	#define RAM_MAX	0xFFFFDFFF
 	#define RAMJUMP_PRELOAD_META 0xffff8000
+	#define NPK_SCI SCI1
 
 #elif defined(SH7051)
 	#include "reg_defines/7051.h"
 	#define RAM_MIN	0xFFFFD800
 	#define RAM_MAX	0xFFFFFFFF
 	#define RAMJUMP_PRELOAD_META 0xffffD800
+	#define NPK_SCI SCI2
 
 #else
 	#error No target specified !
@@ -75,7 +67,7 @@
 
 
 
-/*** WDT and master clock stuff 
+/*** WDT and master clock stuff
  * want to toggle the WDT every 2ms (or 2000us)
  */
 

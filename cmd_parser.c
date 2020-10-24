@@ -47,7 +47,7 @@ struct iso14230_msg {
 };
 
 /** simple 8-bit sum */
-uint8_t cks_u8(const uint8_t * data, unsigned int len) {
+static uint8_t cks_u8(const uint8_t * data, unsigned int len) {
 	uint8_t rv=0;
 
 	while (len > 0) {
@@ -87,10 +87,10 @@ static void sci_rxidle(unsigned ms) {
 		tc = get_mclk_ts();
 		if ((tc - t0) >= intv) return;
 
-		if (SCI1.SSR.BYTE & 0x78) {
+		if (NPK_SCI.SSR.BYTE & 0x78) {
 			/* RDRF | ORER | FER | PER :reset timer */
 			t0 = get_mclk_ts();
-			SCI1.SSR.BYTE &= 0x87;	//clear RDRF + error flags
+			NPK_SCI.SSR.BYTE &= 0x87;	//clear RDRF + error flags
 		}
 	}
 }
@@ -98,10 +98,10 @@ static void sci_rxidle(unsigned ms) {
 /** send a whole buffer, blocking. For use by iso_sendpkt() only */
 static void sci_txblock(const uint8_t *buf, uint32_t len) {
 	for (; len > 0; len--) {
-		while (!SCI1.SSR.BIT.TDRE) {}	//wait for empty
-		SCI1.TDR = *buf;
+		while (!NPK_SCI.SSR.BIT.TDRE) {}	//wait for empty
+		NPK_SCI.TDR = *buf;
 		buf++;
-		SCI1.SSR.BIT.TDRE = 0;		//start tx
+		NPK_SCI.SSR.BIT.TDRE = 0;		//start tx
 	}
 }
 
@@ -113,14 +113,14 @@ static void sci_txblock(const uint8_t *buf, uint32_t len) {
  *
  * this is blocking
  */
-void iso_sendpkt(const uint8_t *buf, int len) {
+static void iso_sendpkt(const uint8_t *buf, int len) {
 	u8 hdr[2];
 	uint8_t cks;
 	if (len <= 0) return;
 
 	if (len > 0xff) len = 0xff;
 
-	SCI1.SCR.BIT.RE = 0;
+	NPK_SCI.SCR.BIT.RE = 0;
 
 	if (len <= 0x3F) {
 		hdr[0] = (uint8_t) len;
@@ -138,9 +138,9 @@ void iso_sendpkt(const uint8_t *buf, int len) {
 	sci_txblock(&cks, 1);	//cks
 
 	//ugly : wait for transmission end; this means re-enabling RX won't pick up a partial byte
-	while (!SCI1.SSR.BIT.TEND) {}
+	while (!NPK_SCI.SSR.BIT.TEND) {}
 
-	SCI1.SCR.BIT.RE = 1;
+	NPK_SCI.SCR.BIT.RE = 1;
 	return;
 }
 
@@ -149,7 +149,7 @@ void iso_sendpkt(const uint8_t *buf, int len) {
 /* transmit negative response, 0x7F <SID> <NRC>
  * Blocking
  */
-void tx_7F(u8 sid, u8 nrc) {
+static void tx_7F(u8 sid, u8 nrc) {
 	u8 buf[3];
 	buf[0]=0x7F;
 	buf[1]=sid;
@@ -158,7 +158,7 @@ void tx_7F(u8 sid, u8 nrc) {
 }
 
 
-void iso_clearmsg(struct iso14230_msg *msg) {
+static void iso_clearmsg(struct iso14230_msg *msg) {
 	msg->hdrlen = 0;
 	msg->datalen = 0;
 	msg->hi = 0;
@@ -174,7 +174,7 @@ enum iso_prc { ISO_PRC_ERROR, ISO_PRC_NEEDMORE, ISO_PRC_DONE };
  * Note : the *msg->hi, ->di, ->hdrlen, ->datalen memberes must be set to 0 before parsing a new message
  */
 
-enum iso_prc iso_parserx(struct iso14230_msg *msg, u8 newbyte) {
+static enum iso_prc iso_parserx(struct iso14230_msg *msg, u8 newbyte) {
 	u8 dl;
 
 	// 1) new msg ?
@@ -245,7 +245,7 @@ static enum t_flashsm {
 } flashstate;
 
 /* initialize command parser state machine;
- * updates SCI1 settings : 62500 bps
+ * updates SCI settings : 62500 bps
  * beware the FER error flag, it disables further RX. So when changing BRR, if the host sends a byte
  * FER will be set, etc.
  */
@@ -253,10 +253,10 @@ static enum t_flashsm {
 void cmd_init(u8 brrdiv) {
 	cmstate = CM_IDLE;
 	flashstate = FL_IDLE;
-	SCI1.SCR.BYTE &= 0xCF;	//disable TX + RX
-	SCI1.BRR = brrdiv;		// speed = (div + 1) * 625k
-	SCI1.SSR.BYTE &= 0x87;	//clear RDRF + error flags
-	SCI1.SCR.BYTE |= 0x30;	//enable TX+RX , no RX interrupts for now
+	NPK_SCI.SCR.BYTE &= 0xCF;	//disable TX + RX
+	NPK_SCI.BRR = brrdiv;		// speed = (div + 1) * 625k
+	NPK_SCI.SSR.BYTE &= 0x87;	//clear RDRF + error flags
+	NPK_SCI.SCR.BYTE |= 0x30;	//enable TX+RX , no RX interrupts for now
 	return;
 }
 
@@ -364,7 +364,7 @@ static void cmd_flash_init(void) {
 
 /* "one's complement" checksum; if adding causes a carry, add 1 to sum. Slightly better than simple 8bit sum
  */
-u8 cks_add8(u8 *data, unsigned len) {
+static u8 cks_add8(u8 *data, unsigned len) {
 	u16 sum = 0;
 	for (; len; len--, data++) {
 		sum += *data;
@@ -377,7 +377,7 @@ u8 cks_add8(u8 *data, unsigned len) {
 /* compare given CRC with calculated value.
  * data is the first byte after SID_CONF_CKS1
  */
-int cmd_romcrc(const u8 *data) {
+static int cmd_romcrc(const u8 *data) {
 	unsigned idx;
 	// <CNH> <CNL> <CRC0H> <CRC0L> ...<CRC3H> <CRC3L>
 	u16 chunkno = (*(data+0) << 8) | *(data+1);
@@ -478,7 +478,7 @@ exit_bad:
 
 
 /* ReadMemByAddress */
-void cmd_rmba(struct iso14230_msg *msg) {
+static void cmd_rmba(struct iso14230_msg *msg) {
 	//format : <SID_RMBA> <AH> <AM> <AL> <SIZ>
 	/* response : <SID + 0x40> <D0>....<Dn> <AH> <AM> <AL> */
 
@@ -630,7 +630,7 @@ void cmd_loop(void) {
 		enum iso_prc prv;
 
 		/* in case of errors (ORER | FER | PER), reset state mach. */
-		if (SCI1.SSR.BYTE & 0x38) {
+		if (NPK_SCI.SSR.BYTE & 0x38) {
 
 			cmstate = CM_IDLE;
 			flashstate = FL_IDLE;
@@ -639,10 +639,10 @@ void cmd_loop(void) {
 			continue;
 		}
 
-		if (!SCI1.SSR.BIT.RDRF) continue;
+		if (!NPK_SCI.SSR.BIT.RDRF) continue;
 
-		rxbyte = SCI1.RDR;
-		SCI1.SSR.BIT.RDRF = 0;
+		rxbyte = NPK_SCI.RDR;
+		NPK_SCI.SSR.BIT.RDRF = 0;
 
 		//t_cur = get_mclk_ts();	/* XXX TODO : filter out interrupted messages with t>5ms interbyte ? */
 

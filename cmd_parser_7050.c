@@ -116,7 +116,7 @@ static void sci_txblock(const uint8_t *buf, uint32_t len) {
  *
  * this is blocking
  */
-void iso_sendpkt(const uint8_t *buf, int len) {
+static void iso_sendpkt(const uint8_t *buf, int len) {
 	u8 hdr[2];
 	uint8_t cks;
 	if (len <= 0) return;
