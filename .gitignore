@@ -2,3 +2,6 @@
 *.elf
 *.hex
 *.map
+*.lst
+*.o
+*.su
