@@ -75,8 +75,11 @@
 
 
 
-/*** WDT and master clock stuff */
-#define WDT_PER_MS	2
+/*** WDT and master clock stuff 
+ * want to toggle the WDT every 2ms (or 2000us)
+ */
+
+//#define WDT_PER_MS	2
 	/* somehow shc sucks at reducing the following :
 	 * u16 WDT_MAXCNT = WDT_PER_MS / 1000 * (40*1000*1000ULL / 64))
 	 */

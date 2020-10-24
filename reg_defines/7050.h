@@ -1,63 +1,45 @@
-#ifndef _7051_H 
-#define _7051_H
+#ifndef _7050_H 
+#define _7050_H
 
 /* HEW 2004.05    */   
 
 /************************************************************************/
-/*      SH7051 Series Include File                          Ver 2.1     */
-/*      Modified from SH7050 for larger flash size                      */
+/*      SH7050 Series Include File                          Ver 2.1     */
 /************************************************************************/
 struct st_flash {                                       /* struct FLASH */
                 union {                                 /* FLMCR1       */
                       unsigned char BYTE;               /*  Byte Access */
                       struct {                          /*  Bit  Access */
                              unsigned char FWE:1;       /*    FWE       */
-                             unsigned char SWE:1;       /*    SWE       */
-                             unsigned char ESU1:1;       /*    ESU       */
-                             unsigned char PSU1:1;       /*    PSU       */
-                             unsigned char EV1 :1;       /*    EV        */
-                             unsigned char PV1 :1;       /*    PV        */
-                             unsigned char E1  :1;       /*    E         */
-                             unsigned char P1  :1;       /*    P         */
+                             unsigned char VPP:1;       /*    VPP       */
+                             unsigned char ESU:1;       /*    ESU       */
+                             unsigned char PSU:1;       /*    PSU       */
+                             unsigned char EV :1;       /*    EV        */
+                             unsigned char PV :1;       /*    PV        */
+                             unsigned char E  :1;       /*    E         */
+                             unsigned char P  :1;       /*    P         */
                              }      BIT;                /*              */
                       }         FLMCR1;                 /*              */
                 union {                                 /* FLMCR2       */
                       unsigned char BYTE;               /*  Byte Access */
                       struct {                          /*  Bit  Access */
                              unsigned char FLER:1;      /*    FLER      */
-                             unsigned char :1;          /*              */
-                             unsigned char ESU2:1;       /*    ESU       */
-                             unsigned char PSU2:1;       /*    PSU       */
-                             unsigned char EV2 :1;       /*    EV        */
-                             unsigned char PV2 :1;       /*    PV        */
-                             unsigned char E2  :1;       /*    E         */
-                             unsigned char P2  :1;       /*    P         */
                              }      BIT;                /*              */
                       }         FLMCR2;                 /*              */
                 union {                                 /* EBR1         */
                       unsigned char BYTE;               /*  Byte Access */
                       struct {                          /*  Bit  Access */
-                             unsigned char :4;          /*              */
+                             unsigned char EB7:1;       /*    EB7       */
+                             unsigned char EB6:1;       /*    EB6       */
+                             unsigned char EB5:1;       /*    EB5       */
+                             unsigned char EB4:1;       /*    EB4       */
                              unsigned char EB3:1;       /*    EB3       */
                              unsigned char EB2:1;       /*    EB2       */
                              unsigned char EB1:1;       /*    EB1       */
                              unsigned char EB0:1;       /*    EB0       */
                              }      BIT;                /*              */
                       }         EBR1;                   /*              */
-                union {                                 /* EBR2         */
-                      unsigned char BYTE;               /*  Byte Access */
-                      struct {                          /*  Bit  Access */
-                             unsigned char EB11:1;      /*    EB11      */
-                             unsigned char EB10:1;      /*    EB10      */
-                             unsigned char EB9:1;       /*    EB9       */
-                             unsigned char EB8:1;       /*    EB8       */
-                             unsigned char EB7:1;       /*    EB7       */
-                             unsigned char EB6:1;       /*    EB6       */
-                             unsigned char EB5:1;       /*    EB5       */
-                             unsigned char EB4:1;       /*    EB4       */
-                             }      BIT;                /*              */
-                      }         EBR2;                   /*              */
-                char            wk[165];                /*              */
+                char            wk[166];                /*              */
                 union {                                 /* RAMER        */
                       unsigned char BYTE;               /*  Byte Access */
                       struct {                          /*  Bit  Access */

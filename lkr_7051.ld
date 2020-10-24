@@ -47,7 +47,7 @@ MEMORY {
 	RAM (xw)	: ORIGIN = 0xFFFFD800, LENGTH = 10K
 	RMETA (xr) : ORIGIN = 0xFFFFD800, LENGTH = 64
 	/* skip the area @ FFFFD800 because there's some metadata copied there */
-	RJFIX (xw)	: ORIGIN = 0xFFFFD900, LENGTH = 7K
+	RJFIX (xw)	: ORIGIN = 0xFFFFD880, LENGTH = 6K
 
 }
 REGION_ALIAS("TGT", RJFIX);

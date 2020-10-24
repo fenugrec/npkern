@@ -41,7 +41,7 @@
 	#define SIDFL_EB	0x01	//erase block. format : <SID_FLASH> <SIDFL_EB> <BLOCK #>
 	#define SIDFL_WB	0x02	//write n-byte block. format : <SID_FLASH> <SIDFL_WB> <A2> <A1> <A0> <D0>...<D(SIDFL_WB_DLEN -1)> <CRC>
 						// Address is <A2 A1 A0>;   CRC is calculated on address + data.
-	#define SIDFL_WB_DLEN	128	//bytes per block
+	#define SIDFL_WB_DLEN	128	//bytes sent per niprog block
 
 /* SID_CONF and subcommands */
 #define SID_CONF 0xBE /* set & configure kernel */

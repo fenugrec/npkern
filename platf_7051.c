@@ -1,11 +1,8 @@
 /* platform-specific code (see platf.h)
- * Implements the reflashing back-end commands for 350nm SH7051.
+ * Implements the reflashing back-end commands for older SH7051.
  */
 
-/*XXXX TODO !! this is just copied from the 7055_350nm code ! */
-
-
-/* (c) copyright fenugrec 2017
+/* (c) copyright fenugrec 2016, a33b 2020
  * GPLv3
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,58 +19,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* General notes
- *
- * The 7055 datasheet is written in a slightly confusing style, and some
- * elements are not perfectly clear.
- * Renesas FDT includes sample kernel code that *should* work, but
- * in some respects does not follow the DS, adding to the confusion. The
- * FDT code is also handwritten assembly, with sparse comments (in
- * almost-english) so the intent is not always clear.
- *
- * Other code I've seen (Nissan kernel) has yet another interpretation of
- * the DS, and disagrees with both FDT code and the DS on some points.
- *
- * In here, I've attempted to follow the DS to the letter, referring to
- * FDT code for correctness and Nissan code for sanity.
- *
- **** Questionable points
- *
- * Use of WDT peripheral : DS and FDT code use it, Nissan doesn't.
- * I currently have it in here, but I may remove it since I don't know
- * if Nissan ECUs have the WDTOVF CPU pin wired to anything problematic.
- *
- * Computation of "additional programming data" : DS is unclear, Nissan
- * seems wrong, but FDT agrees with my reading of the DS.
- *
- * Delay loops : the most critical timing values are the "write pulse"
- * delays; for these I disable interrupts around the pulse so our ECU_WDT
- * interrupt doesn't interfere.
- */
-
-
-/* I did attempt to port the Renesas FDT code to GNU as. Little/nothing to be gained
-sh-elf-size with no implems: 3392	1024	536 => 4952
-sh-elf-size with Erase asm implem: 4024	1024	552 => 5600, delta = 648B
-sh-elf-size with Erase C implem: 3924	1024	548	=> 5496, delta = 544B
-sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
+/* See platf_7055... for general notes 
+This was hacked together by a33b
 */
 
 
 #include "functions.h"
 #include "extra_functions.h"
+#include "reg_defines/7051.h"	//io peripheral regs etc
 
 #include <string.h>	//memcpy
 #include "stypes.h"
 #include "platf.h"
 #include "iso_cmds.h"
+#include "npk_errcodes.h"
 
 /*********  Reflashing defines
  *
- * This is for SH7055 (0.35um) and assumes this RAM map (see .ld file)
+ * This is for SH7051 and assumes this RAM map (see .ld file)
  *
- * - stack @ 0xFFFF BFFC (growing downwards)
- * - kernel @ 0xFFFF 8100, this leaves ~16k for both kernel + stack
+ * - stack @ 0xFFFF FFFC  (growing downwards)
+ * - kernel @ 0xFFFF D880, this leaves just less than ~10k for both kernel + stack
  */
 
 
@@ -83,58 +49,53 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 
 #define FL_MAXROM	(256*1024UL - 1UL)
 
-#define FLASH_180_FKEY ((volatile uint8_t *) 0xFFFFE804)	//exists only on 180nm ICs. Used for process size detection
-
 
 /********** Timing defs
 */
 
-//Assume 40MHz clock. Some critical timing depends on this being true,
+//20MHz clock. Some critical timing depends on this being true,
 //WDT stuff in particular isn't macro-fied
-#define CPUFREQ	(40)
+#define CPUFREQ	(20)
 
-#define WDT_RSTCSR_SETTING 0x5A5F;	//power-on reset if TCNT overflows
-#define WDT_TCSR_ESTART (0xA578 | 0x06)	//write value to start with 1:4096 div (26.2 ms @ 40MHz), for erase runaway
-#define WDT_TCSR_WSTART (0xA578 | 0x05)	//write value to start with 1:1024 div (6.6 ms @ 40MHz), for write runaway
+#define WDT_RSTCSR_SETTING 0x5A4F	//reset if TCNT overflows
+#define WDT_TCSR_ESTART (0xA578 | 0x06)	//write value to start with 1:4096 div (52.4 ms @ 20MHz), for erase runaway
+#define WDT_TCSR_WSTART (0xA578 | 0x05)	//write value to start with 1:1024 div (13.1 ms @ 20MHz), for write runaway
 #define WDT_TCSR_STOP 0xA558	//write value to stop WDT count
 
-//TODO recheck calculation
-#define WAITN_TCYCLE 4		/* clock cycles per loop, see asm */
+//KEN TODO recheck calculation
+#define WAITN_TCYCLE 4		/* KEN clock cycles per loop, see asm */
 #define WAITN_CALCN(usec) (((usec) * CPUFREQ / WAITN_TCYCLE) + 1)
 
 
 /** Common timing constants */
-#define TSSWE	WAITN_CALCN(1)
-#define TCSWE	WAITN_CALCN(100)
+#define TSSWE	WAITN_CALCN(10)
+#define TCSWE	WAITN_CALCN(100)  //Not in Hitachi datasheet, but shouldn't hurt
 
 /** Erase timing constants */
-#define TSESU	WAITN_CALCN(100)
-#define TSE	WAITN_CALCN(10000UL)
+#define TSESU	WAITN_CALCN(200)
+#define TSE	WAITN_CALCN(5000UL)
 #define TCE	WAITN_CALCN(10)
 #define TCESU	WAITN_CALCN(10)
-#define TSEV	WAITN_CALCN(6)	/******** Renesas has 20 for this !?? */
+#define TSEV	WAITN_CALCN(10)	/******** Renesas has 20 for this !?? */
 #define TSEVR	WAITN_CALCN(2)
-#define TCEV	WAITN_CALCN(4)
+#define TCEV	WAITN_CALCN(5)
 
 
 /** Write timing constants */
-#define TSPSU	WAITN_CALCN(50)
-#define TSP10	WAITN_CALCN(10)
-#define TSP30	WAITN_CALCN(30)
-#define TSP200	WAITN_CALCN(200)
-#define TCP	WAITN_CALCN(5)
-#define TCPSU	WAITN_CALCN(5)
-#define TSPV	WAITN_CALCN(4)
-#define TSPVR	WAITN_CALCN(2)
-#define TCPV	WAITN_CALCN(2)
+#define TSPSU	WAITN_CALCN(300) //Datasheet has 50, F-ZTAT has 300
+#define TSP500	WAITN_CALCN(500)
+#define TCP		WAITN_CALCN(10)
+#define TCPSU	WAITN_CALCN(10)
+#define TSPV	WAITN_CALCN(10) //Datasheet has 4, F-ZTAT has 10
+#define TSPVR	WAITN_CALCN(5) //Datasheet has 2, F-ZTAT has 5
+#define TCPV	WAITN_CALCN(5) //Datasheet has 4, F-ZTAT has 5
 
 
 /** FLASH constants */
-#define MAX_ET	100		// The number of times of the maximum erase
-#define MAX_WT	1000		// The number of times of the maximum writing
-#define OW_COUNT	6		// The number of times of additional writing
-#define BLK_MAX	16		// EB0..EB15
-#define FLMCR2_BEGIN 0x40000 //40000 - 7FFFF controlled by FLMCR2
+#define MAX_ET	61		// The number of times of the maximum erase
+#define MAX_WT	400		// The number of times of the maximum writing
+#define BLK_MAX	12		// EB0..EB11
+#define FLMCR2_BEGIN 0x20000 //20000 - 3FFFF controlled by FLMCR2
 
 
 /** FLMCRx bit defines */
@@ -149,41 +110,20 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #define FLMCR_P	0x01
 
 
-/** Error code defines
- * adjusted to fit with 180nm error codes, and double as the iso14230 NRC
- */
-
-#define PFEB_BADBLOCK (0x84 | 0x00)	//bad block #
-#define PFEB_VERIFAIL (0x84 | 0x01)	//erase verify failed
-
-#define PFWB_OOB (0x88 | 0x00)		//dest out of bounds
-#define PFWB_MISALIGNED (0x88 | 0x01)	//dest not on 128B boundary
-#define PFWB_LEN (0x88 | 0x02)		//len not multiple of 128
-#define PFWB_VERIFAIL (0x88 | 0x03)	//post-write verify failed
-#define PFWB_MAXRET (0x88 | 0x04)	//max # of rewrite attempts
-
-#define PF_ERROR 0x80		//generic flashing error : FWE, etc
-#define PF_SILICON 0x81	//not running on a 350nm IC
-
-
 const u32 fblocks[] = {
 	0x00000000,
-	0x00001000,
-	0x00002000,
-	0x00003000,
-	0x00004000,
-	0x00005000,
-	0x00006000,
-	0x00007000,
 	0x00008000,
 	0x00010000,
+	0x00018000,
 	0x00020000,
+	0x00028000,
 	0x00030000,
-	0x00040000,
-	0x00050000,
-	0x00060000,
-	0x00070000,
-	0x00080000		//last one just for delimiting the last block
+	0x00038000,
+	0x0003F000,
+	0x0003F400,
+	0x0003F800,
+	0x0003FC00,
+	0x00040000,	//last one just for delimiting the last block
 };
 
 
@@ -197,7 +137,7 @@ static volatile u8 *pFLMCR;	//will point to FLMCR1 or FLMCR2 as required
 /** spin for <loops> .
  * Constants should be calculated at compile-time.
  */
-#define WAITN_TCYCLE	4	//clock cycles per loop
+#define WAITN_TCYCLE	4	//clock cycles per loop  KEN to verify
 
 static void waitn(unsigned loops) {
 	u32 tmp;
@@ -218,14 +158,14 @@ static bool fwecheck(void) {
 
 /** Set SWE bit and wait */
 static void sweset(void) {
-	*pFLMCR |= FLMCR_SWE;
+	FLASH.FLMCR1.BIT.SWE |= FLMCR_SWE;
 	waitn(TSSWE);
 	return;
 }
 
 /** Clear SWE bit and wait */
 static void sweclear(void) {
-	*pFLMCR &= ~FLMCR_SWE;
+	FLASH.FLMCR1.BIT.SWE &= ~FLMCR_SWE;
 	waitn(TCSWE);
 }
 
@@ -262,7 +202,7 @@ static bool ferasevf(unsigned blockno) {
 
 
 /* pFLMCR must be set;
- * blockno validated <= 15 of course
+ * blockno validated <= 11 of course
  */
 static void ferase(unsigned blockno) {
 	unsigned bitsel;
@@ -274,8 +214,8 @@ static void ferase(unsigned blockno) {
 	}
 
 	FLASH.EBR2.BYTE = 0;	//to ensure we don't have > 1 bit set simultaneously
-	FLASH.EBR1.BYTE = bitsel & 0xFF;	//EB0..7
-	FLASH.EBR2.BYTE = (bitsel >> 8) & 0xFF;	//EB8..15
+	FLASH.EBR1.BYTE = bitsel & 0xFF;	//EB0..3
+	FLASH.EBR2.BYTE = (bitsel >> 4) & 0xFF;	//EB4..11
 
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;	//this also clears TCNT
 	WDT.WRITE.TCSR = WDT_TCSR_ESTART;
@@ -347,7 +287,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 
 /*********** Write ***********/
 
-/** Copy 128-byte chunk + apply write pulse for tsp=10/30/200us as specified
+/** Copy 32-byte chunk + apply write pulse for tsp=500us
  */
 static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 //	int prev_imask = get_imask();
@@ -356,7 +296,7 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 	u32 cur;
 
 	//can't use memcpy because these must be byte transfers
-	for (cur = 0; cur < 128; cur++) {
+	for (cur = 0; cur < 32; cur++) {
 		dest[cur] = src[cur];
 	}
 
@@ -366,7 +306,7 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 	WDT.WRITE.TCSR = WDT_TCSR_WSTART;
 
 	*pFLMCR |= FLMCR_PSU;
-	waitn(TSPSU);
+	waitn(TSPSU);		//F-ZTAT has 300 here
 	*pFLMCR |= FLMCR_P;
 	waitn(tsp);
 	*pFLMCR &= ~FLMCR_P;
@@ -383,10 +323,9 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 /** ret 0 if ok, NRC if error
  * assumes params are ok, and that block was already erased
  */
-static u32 flash_write128(u32 dest, u32 src_unaligned) {
-	u8 src[128] __attribute ((aligned (4)));	// aligned copy of desired data
-	u8 reprog[128] __attribute ((aligned (4)));	// retry / reprogram data
-	u8 addit[128] __attribute ((aligned (4)));	// overwrite / additional data
+static u32 flash_write32(u32 dest, u32 src_unaligned) {
+	u8 src[32] __attribute ((aligned (4)));	// aligned copy of desired data
+	u8 reprog[32] __attribute ((aligned (4)));	// retry / reprogram data
 
 	unsigned n;
 	bool m;
@@ -402,8 +341,8 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 		return PF_ERROR;
 	}
 
-	memcpy(src, (void *) src_unaligned, 128);
-	memcpy(reprog, (void *) src, 128);
+	memcpy(src, (void *) src_unaligned, 32);
+	memcpy(reprog, (void *) src, 32);
 
 	sweset();
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
@@ -414,26 +353,21 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 
 		m = 0;
 
-		//1) write (latch) to flash, with 30/200us pulse
-
-		if (n <= OW_COUNT) {
-			writepulse((volatile u8 *)dest, reprog, TSP30);
-		} else {
-			writepulse((volatile u8 *)dest, reprog, TSP200);
-		}
+		//1) write (latch) to flash, with 500us pulse
+		writepulse((volatile u8 *)dest, reprog, TSP500);
 
 		//2) Program verify
 		*pFLMCR |= FLMCR_PV;
-		waitn(TSPV);
+		waitn(TSPV);	//F-ZTAT has 10 here
 
-		for (cur = 0; cur < 128; cur += 4) {
+		for (cur = 0; cur < 32; cur += 4) {
 			u32 verifdata;
 			u32 srcdata;
 			u32 just_written;
 
 			//dummy write 0xFFFFFFFF
 			*(volatile u32 *) (dest + cur) = (u32) -1;
-			waitn(TSPVR);
+			waitn(TSPVR);	//F-ZTAT has 5 here
 
 			verifdata = *(volatile u32 *) (dest + cur);
 			srcdata = *(u32 *) (src + cur);
@@ -444,14 +378,15 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 				m = 1;
 			}
 
-			if (n <= 6) {
+/*	This check is not in 7050
+		if (n <= 6) {
 				// compute "additional programming data"
 				// The datasheet isn't very clear about this, and interpretations vary (Nissan kernel vs FDT example)
 				// This follows what FDT does.
 				* (u32 *) (addit + cur) = verifdata | just_written;
 
 			}
-
+*/  
 			if (srcdata & ~verifdata) {
 				//wanted '1' bits, but somehow got '0's : serious error
 				rv = PFWB_VERIFAIL;
@@ -463,20 +398,21 @@ static u32 flash_write128(u32 dest, u32 src_unaligned) {
 		}	//for (program verif)
 
 		*pFLMCR &= ~FLMCR_PV;
-		waitn(TCPV);
+		waitn(TCPV);	//F-ZTAT has 5 here
 
+/*	this check is not in 7050
 		if (n <= 6) {
 			// write additional reprog data
 			writepulse((volatile u8 *) dest, addit, TSP10);
 		}
-
+*/
 		if (!m) {
 			//success
 			sweclear();
 			return 0;
 		}
 
-	}	//for (n < 1000)
+	}	//for (n < 400)
 
 	//failed, max # of retries
 	rv = PFWB_MAXRET;
@@ -489,42 +425,33 @@ badexit:
 uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
 	if (dest > FL_MAXROM) return PFWB_OOB;
-	if (dest & 0x7F) return PFWB_MISALIGNED;	//dest not aligned on 128B boundary
-	if (len & 0x7F) return PFWB_LEN;	//must be multiple of 128B too
+	if (dest & 0x1F) return PFWB_MISALIGNED;	//dest not aligned on 32B boundary
+	if (len & 0x1F) return PFWB_LEN;	//must be multiple of 32B too
 
 	if (!reflash_enabled) return 0;	//pretend success
 
 	while (len) {
 		uint32_t rv = 0;
 
-		rv = flash_write128(dest, src);
+		rv = flash_write32(dest, src);
 
 		if (rv) {
 			return rv;
 		}
 
-		dest += 128;
-		src += 128;
-		len -= 128;
+		dest += 32;
+		src += 32;
+		len -= 32;
 	}
 	return 0;
 }
 
 
 /*********** init, unprotect ***********/
-/*SABOTAGD XXXXXX*/
+
 
 bool platf_flash_init(u8 *err) {
-	return 0;
-
 	reflash_enabled = 0;
-
-	//Check 180nm vs 350nm : on 350nm, FKEY is undefined; 180nm has an 8bit RW register
-	*FLASH_180_FKEY = 0x33;
-	if (*FLASH_180_FKEY == 0x33) {
-		*err = PF_SILICON;
-		return 0;
-	}
 
 	//Check FLER
 	if (!fwecheck()) {

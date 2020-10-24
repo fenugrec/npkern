@@ -47,14 +47,14 @@ LDFLAGS = $(CPU) -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(PROJECT).map,--cref,--gc
 ASRC = start_705x.s
 
 SRC = cmd_parser.c eep_funcs.c main.c crc.c
-SRC += platf_705x.c
 
-ifeq ($(BUILDWHAT), SH7055_35)
-	SRC += platf_7055_350nm.c
-else ifeq ($(BUILDWHAT), SH7051)
-	SRC += platf_7051.c
+ifeq ($(BUILDWHAT), SH7051)
+	SRC += platf_7051.c platf_7050h.c
+else ifeq ($(BUILDWHAT), SH7055_35)
+	SRC += platf_7055_350nm.c platf_7055p.c
 else
-	SRC += platf_705x_180nm.c
+	#new 7055 or 7058, 180nm
+	SRC += platf_705x_180nm.c platf_7055p.c
 endif
 
 
