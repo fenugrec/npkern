@@ -51,12 +51,10 @@ SRC += platf_705x.c
 
 ifeq ($(BUILDWHAT), SH7055_35)
 	SRC += platf_7055_350nm.c
-else
-ifeq ($(BUILDWHAT), SH7051)
+else ifeq ($(BUILDWHAT), SH7051)
 	SRC += platf_7051.c
 else
 	SRC += platf_705x_180nm.c
-endif
 endif
 
 
