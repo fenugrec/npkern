@@ -45,7 +45,7 @@ void wdt_tog(void);
  *
  * clr timer and flag, easy
  */
-void INT_ATU11_IMI1A(void) ISR;
+void INT_ATU11_IMI1A(void) ISR_attrib;
 void INT_ATU11_IMI1A(void) {
 
 	wdt_tog();

@@ -26,7 +26,7 @@
 
 
 
-#define ISR __attribute__ ((interrupt_handler))
+#define ISR_attrib __attribute__ ((interrupt_handler))
 
 
 /** Define vector number for each */

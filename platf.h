@@ -3,7 +3,7 @@
 /****** Platform-specific code and defines
  */
 
-/* (c) copyright fenugrec 2016
+/* (c) copyright fenugrec 2016-2020
  * GPLv3
  *
  * This program is free software: you can redistribute it and/or modify

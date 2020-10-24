@@ -25,7 +25,6 @@
 
 
 #include "functions.h"
-#include "reg_defines/7050.h"	//io peripheral regs etc
 #include "ivect_7050.h"
 
 #include "stypes.h"
@@ -46,7 +45,7 @@ void wdt_tog(void);
  *
  * clr timer and flag, easy
  */
-void INT_CMT1_CMTI1(void) ISR;
+void INT_CMT1_CMTI1(void) ISR_attrib;
 void INT_CMT1_CMTI1(void) {
 
 	wdt_tog();
