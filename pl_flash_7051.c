@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* See platf_7055... for general notes 
+/* See platf_7055... for general notes
 This was hacked together by a33b
 */
 
@@ -386,7 +386,7 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 				* (u32 *) (addit + cur) = verifdata | just_written;
 
 			}
-*/  
+*/
 			if (srcdata & ~verifdata) {
 				//wanted '1' bits, but somehow got '0's : serious error
 				rv = PFWB_VERIFAIL;

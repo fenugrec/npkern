@@ -46,6 +46,13 @@ struct iso14230_msg {
 	u8	data[256];	//255 data bytes + checksum
 };
 
+/* generic buffer to construct responses. Saves a lot of stack vs
+ * each function declaring its buffer as a local var : gcc tends to inline everything
+ * but not combine /overlap each buffer.
+ * We just need to make sure the comms functions (iso_sendpkt, tx_7F etc) use their own
+ * private buffers. */
+static u8 txbuf[256];
+
 /** simple 8-bit sum */
 static uint8_t cks_u8(const uint8_t * data, unsigned int len) {
 	uint8_t rv=0;
@@ -262,8 +269,8 @@ void cmd_init(u8 brrdiv) {
 
 static void cmd_startcomm(void) {
 	// KW : noaddr;  len-in-fmt or lenbyte
-	static const u8 txbuf[3] = {0xC1, 0x67, 0x8F};
-	iso_sendpkt(txbuf, 3);
+	static const u8 startcomm_resp[3] = {0xC1, 0x67, 0x8F};
+	iso_sendpkt(startcomm_resp, 3);
 	flashstate = FL_IDLE;
 }
 
@@ -323,16 +330,13 @@ static void cmd_dump(struct iso14230_msg *msg) {
 		break;
 	case SID_DUMP_ROM:
 		/* dump from ROM */
+		txbuf[0] = SID_DUMP + 0x40;
 		while (len) {
-			u8 buf[33];
-
 			int pktlen;
-
-			buf[0] = SID_DUMP + 0x40;
 			pktlen = len;
 			if (pktlen > 32) pktlen = 32;
-			memcpy(&buf[1], (void *) addr, pktlen);
-			iso_sendpkt(buf, pktlen + 1);
+			memcpy(&txbuf[1], (void *) addr, pktlen);
+			iso_sendpkt(txbuf, pktlen + 1);
 			len -= pktlen;
 			addr += pktlen;
 		}
@@ -348,7 +352,6 @@ static void cmd_dump(struct iso14230_msg *msg) {
 
 /* SID 34 : prepare for reflashing */
 static void cmd_flash_init(void) {
-	u8 txbuf[2];
 	u8 errval;
 
 	if (!platf_flash_init(&errval)) {
@@ -399,7 +402,6 @@ static int cmd_romcrc(const u8 *data) {
 /* handle low-level reflash commands */
 static void cmd_flash_utils(struct iso14230_msg *msg) {
 	u8 subcommand;
-	u8 txbuf[10];
 	u32 tmp;
 
 	u32 rv = ISO_NRC_GR;
@@ -483,7 +485,6 @@ static void cmd_rmba(struct iso14230_msg *msg) {
 	/* response : <SID + 0x40> <D0>....<Dn> <AH> <AM> <AL> */
 
 	u32 addr;
-	u8 buf[255];
 	int siz;
 
 	if (msg->datalen != 5) goto bad12;
@@ -493,15 +494,15 @@ static void cmd_rmba(struct iso14230_msg *msg) {
 
 	addr = reconst_24(&msg->data[1]);
 
-	buf[0] = SID_RMBA + 0x40;
-	memcpy(buf + 1, (void *) addr, siz);
+	txbuf[0] = SID_RMBA + 0x40;
+	memcpy(txbuf + 1, (void *) addr, siz);
 
 	siz += 1;
-	buf[siz++] = msg->data[1];
-	buf[siz++] = msg->data[2];
-	buf[siz++] = msg->data[3];
+	txbuf[siz++] = msg->data[1];
+	txbuf[siz++] = msg->data[2];
+	txbuf[siz++] = msg->data[3];
 
-	iso_sendpkt(buf, siz);
+	iso_sendpkt(txbuf, siz);
 	return;
 
 bad12:
@@ -618,9 +619,8 @@ bad12:
  */
 void cmd_loop(void) {
 	u8 rxbyte;
-	u8 txbuf[63];
 
-	struct iso14230_msg msg;
+	static struct iso14230_msg msg;
 
 	//u32 t_last, t_cur;	//timestamps
 
