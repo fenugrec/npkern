@@ -286,7 +286,7 @@ static void cmd_dump(struct iso14230_msg *msg) {
 	u8 *args = &msg->data[1];	//skip SID byte
 
 	if (msg->datalen != 6) {
-		tx_7F(SID_DUMP, 0x12);
+		tx_7F(SID_DUMP, ISO_NRC_SFNS_IF);
 		return;
 	}
 
@@ -338,7 +338,7 @@ static void cmd_dump(struct iso14230_msg *msg) {
 		}
 		break;
 	default:
-		tx_7F(SID_DUMP, 0x12);
+		tx_7F(SID_DUMP, ISO_NRC_SFNS_IF);
 		break;
 	}	//switch (space)
 
@@ -356,7 +356,7 @@ static void cmd_flash_init(void) {
 		return;
 	}
 
-	txbuf[0] = 0x74;
+	txbuf[0] = (SID_FLREQ + 0x40);
 	iso_sendpkt(txbuf, 1);
 	flashstate = FL_READY;
 	return;
@@ -402,15 +402,15 @@ static void cmd_flash_utils(struct iso14230_msg *msg) {
 	u8 txbuf[10];
 	u32 tmp;
 
-	u32 rv = 0x10;
+	u32 rv = ISO_NRC_GR;
 
 	if (flashstate != FL_READY) {
-		rv = 0x22;
+		rv = ISO_NRC_CNCORSE;
 		goto exit_bad;
 	}
 
 	if (msg->datalen <= 1) {
-		rv = 0x12;
+		rv = ISO_NRC_SFNS_IF;
 		goto exit_bad;
 	}
 
@@ -420,7 +420,7 @@ static void cmd_flash_utils(struct iso14230_msg *msg) {
 	case SIDFL_EB:
 		//format : <SID_FLASH> <SIDFL_EB> <BLOCKNO>
 		if (msg->datalen != 3) {
-			rv = 0x12;
+			rv = ISO_NRC_SFNS_IF;
 			goto exit_bad;
 		}
 		rv = platf_flash_eb(msg->data[2]);
@@ -432,12 +432,12 @@ static void cmd_flash_utils(struct iso14230_msg *msg) {
 	case SIDFL_WB:
 		//format : <SID_FLASH> <SIDFL_WB> <A2> <A1> <A0> <D0>...<D127> <CRC>
 		if (msg->datalen != (SIDFL_WB_DLEN + 6)) {
-			rv = 0x12;
+			rv = ISO_NRC_SFNS_IF;
 			goto exit_bad;
 		}
 
 		if (cks_add8(&msg->data[2], (SIDFL_WB_DLEN + 3)) != msg->data[SIDFL_WB_DLEN + 5]) {
-			rv = 0x77;	//crcerror
+			rv = SID_CONF_CKS1_BADCKS;	//crcerror
 			goto exit_bad;
 		}
 
@@ -451,18 +451,18 @@ static void cmd_flash_utils(struct iso14230_msg *msg) {
 	case SIDFL_UNPROTECT:
 		//format : <SID_FLASH> <SIDFL_UNPROTECT> <~SIDFL_UNPROTECT>
 		if (msg->datalen != 3) {
-			rv = 0x12;
+			rv = ISO_NRC_SFNS_IF;
 			goto exit_bad;
 		}
 		if (msg->data[2] != (u8) ~SIDFL_UNPROTECT) {
-			rv = 0x35;	//InvalidKey
+			rv = ISO_NRC_IK;	//InvalidKey
 			goto exit_bad;
 		}
 
 		platf_flash_unprotect();
 		break;
 	default:
-		rv = 0x12;
+		rv = ISO_NRC_SFNS_IF;
 		goto exit_bad;
 		break;
 	}
@@ -505,7 +505,7 @@ static void cmd_rmba(struct iso14230_msg *msg) {
 	return;
 
 bad12:
-	tx_7F(SID_RMBA, 0x12);
+	tx_7F(SID_RMBA, ISO_NRC_SFNS_IF);
 	return;
 }
 
@@ -514,7 +514,7 @@ bad12:
 static void cmd_wmba(struct iso14230_msg *msg) {
 	/* WriteMemByAddress (RAM only !) . format : <SID_WMBA> <AH> <AM> <AL> <SIZ> <DATA> , siz <= 250. */
 	/* response : <SID + 0x40> <AH> <AM> <AL> */
-	u8 rv = 0x12;
+	u8 rv = ISO_NRC_SFNS_IF;
 	u32 addr;
 	u8 siz;
 	u8 *src;
@@ -531,7 +531,7 @@ static void cmd_wmba(struct iso14230_msg *msg) {
 	// bounds check, restrict to RAM
 	if (	(addr < RAM_MIN) ||
 		(addr > RAM_MAX)) {
-		rv = 0x42;
+		rv = ISO_NRC_CNDTSA; /* canNotDownloadToSpecifiedAddress */
 		goto badexit;
 	}
 
@@ -605,7 +605,7 @@ static void cmd_conf(struct iso14230_msg *msg) {
 	}
 
 bad12:
-	tx_7F(SID_CONF, 0x12);
+	tx_7F(SID_CONF, ISO_NRC_SFNS_IF);
 	return;
 }
 
@@ -662,7 +662,7 @@ void cmd_loop(void) {
 		switch (cmstate) {
 		case CM_IDLE:
 			/* accept only startcomm requests */
-			if (msg.data[0] == 0x81) {
+			if (msg.data[0] == SID_STARTCOMM) {
 				cmd_startcomm();
 				cmstate = CM_READY;
 			}
@@ -671,7 +671,7 @@ void cmd_loop(void) {
 
 		case CM_READY:
 			switch (msg.data[0]) {
-			case 0x81:
+			case SID_STARTCOMM:
 				cmd_startcomm();
 				iso_clearmsg(&msg);
 				break;
@@ -715,7 +715,7 @@ void cmd_loop(void) {
 				iso_clearmsg(&msg);
 				break;
 			default:
-				tx_7F(msg.data[0], 0x11);
+				tx_7F(msg.data[0], ISO_NRC_SNS);
 				iso_clearmsg(&msg);
 				break;
 			}	//switch (SID)

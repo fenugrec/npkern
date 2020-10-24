@@ -23,10 +23,19 @@
 #define SID_CONF_CKS1_BADCKS	0x77	//NRC when crc is bad
 
 
-/**** Common flash error codes for all platforms.
- * adjusted to fit with 180nm error codes (different from possible FPFR return values)
- * and double as the iso14230 NRC*/
+/**** Common flash error codes for all platforms. */
 
+/* some standard iso14230 errors */
+#define ISO_NRC_GR	0x10	/* generalReject */
+#define ISO_NRC_SNS	0x11	/* serviceNotSupported */
+#define ISO_NRC_SFNS_IF	0x12	/* subFunctionNotSupported-Invalid Format */
+#define ISO_NRC_CNCORSE	0x22	/* conditionsNoteCorrectOrRequestSequenceError */
+#define ISO_NRC_IK	0x35	/* invalidKey */
+#define ISO_NRC_CNDTSA	0x42	/* canNotDownloadToSpecifiedAddress */
+
+
+/* Custom errors adjusted to fit with 180nm error codes (different from possible FPFR return values)
+ * and double as the iso14230 NRC*/
 #define PF_ERROR 0x80		//generic flashing error : FWE, etc
 #define PF_SILICON 0x81	//Not running on correct silicon (180 / 350nm)
 

@@ -56,6 +56,7 @@
 									* <SID_CONF> <SID_CONF_R16> <A2> <A1> <A0> */
 
 #define SID_FLREQ 0x34	/* RequestDownload */
+#define SID_STARTCOMM 0x81 /* startCommunication */
 
 #define SID_RESET 0x11	/* restart ECU */
 
