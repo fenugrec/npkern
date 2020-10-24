@@ -51,10 +51,10 @@ SRC = cmd_parser.c eep_funcs.c main.c crc.c
 ifeq ($(BUILDWHAT), SH7051)
 	SRC += platf_7051.c platf_7050h.c
 else ifeq ($(BUILDWHAT), SH7055_35)
-	SRC += platf_7055_350nm.c platf_7055p.c
+	SRC += platf_7055p.c platf_7055_350nm.c
 else
 	#new 7055 or 7058, 180nm
-	SRC += platf_705x_180nm.c platf_7055p.c
+	SRC += platf_7055p.c platf_705x_180nm.c
 endif
 
 
