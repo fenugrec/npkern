@@ -76,7 +76,8 @@ intprg, ivect* : interrupt vectors and handlers
 iso_cmds.h : definitions for supported ISO commands / SIDs
 lkr_* : linker script, this defines where the kernel will be compiled + loaded in RAM
 main.c : main
-platf* : this is to split the CPU (platform)-specific code from the generic code. In here are the actual reflash algos, etc.
+platf* : this is to split the CPU (platform)-specific code from the generic code.
+pl_flash_*: platform-specific reflash back-end etc.
 start_705x.s : initial self-loader code, this is the first thing that runs at the RAMjump step.
 stypes.h : shorthand for common types
 
