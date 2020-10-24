@@ -30,10 +30,10 @@
 #include "stypes.h"
 #include "platf.h"
 
-/* init SCI1 to continue comms on K line */
+/* init SCI2 to continue comms on K line */
 static void init_sci(void) {
-	SCI1.SCR.BYTE &= 0x2F;	//clear TXIE, RXIE, RE
-	SCI1.SCR.BIT.TE = 1;	//enable TX
+	SCI2.SCR.BYTE &= 0x2F;	//clear TXIE, RXIE, RE
+	SCI2.SCR.BIT.TE = 1;	//enable TX
 	return;
 }
 
