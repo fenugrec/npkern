@@ -158,14 +158,14 @@ static bool fwecheck(void) {
 
 /** Set SWE bit and wait */
 static void sweset(void) {
-	FLASH.FLMCR1.BIT.SWE |= FLMCR_SWE;
+	FLASH.FLMCR1.BIT.SWE = 1;
 	waitn(TSSWE);
 	return;
 }
 
 /** Clear SWE bit and wait */
 static void sweclear(void) {
-	FLASH.FLMCR1.BIT.SWE &= ~FLMCR_SWE;
+	FLASH.FLMCR1.BIT.SWE = 0;
 	waitn(TCSWE);
 }
 
@@ -214,7 +214,7 @@ static void ferase(unsigned blockno) {
 	}
 
 	FLASH.EBR2.BYTE = 0;	//to ensure we don't have > 1 bit set simultaneously
-	FLASH.EBR1.BYTE = bitsel & 0xFF;	//EB0..3
+	FLASH.EBR1.BYTE = bitsel & 0x0F;	//EB0..3
 	FLASH.EBR2.BYTE = (bitsel >> 4) & 0xFF;	//EB4..11
 
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;	//this also clears TCNT
