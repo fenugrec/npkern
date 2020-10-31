@@ -37,6 +37,10 @@
 /* Custom errors adjusted to fit with 180nm error codes (different from possible FPFR return values)
  * and double as the iso14230 NRC*/
 #define PF_ERROR 0x80		//generic flashing error : FWE, etc
+#define PF_ERROR_AFTERASE 0x8F
+#define PF_ERROR_B4WRITE 0x90
+#define PF_ERROR_AFTWRITE 0x91
+#define PF_ERROR_VERIF 0x92
 #define PF_SILICON 0x81	//Not running on correct silicon (180 / 350nm)
 
 #define PFEB_BADBLOCK (0x84 | 0x00)	//bad block #
