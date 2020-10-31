@@ -39,7 +39,7 @@ This was hacked together by a33b
  * This is for SH7051 and assumes this RAM map (see .ld file)
  *
  * - stack @ 0xFFFF FFFC  (growing downwards)
- * - kernel @ 0xFFFF D880, this leaves just less than ~10k for both kernel + stack
+ * - kernel @ 0xFFFF D840, this leaves just less than ~10k for both kernel + stack
  */
 
 
@@ -63,7 +63,7 @@ This was hacked together by a33b
 #define WDT_TCSR_STOP 0xA558	//write value to stop WDT count
 
 //KEN TODO recheck calculation
-#define WAITN_TCYCLE 4		/* KEN clock cycles per loop, see asm */
+#define WAITN_TCYCLE 4		/* clock cycles per loop, see asm */
 #define WAITN_CALCN(usec) (((usec) * CPUFREQ / WAITN_TCYCLE) + 1)
 
 
@@ -137,7 +137,7 @@ static volatile u8 *pFLMCR;	//will point to FLMCR1 or FLMCR2 as required
 /** spin for <loops> .
  * Constants should be calculated at compile-time.
  */
-#define WAITN_TCYCLE	4	//clock cycles per loop  KEN to verify
+#define WAITN_TCYCLE	4	//clock cycles per loop
 
 static void waitn(unsigned loops) {
 	u32 tmp;
@@ -338,7 +338,7 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 	}
 
 	if (!fwecheck()) {
-		return PF_ERROR;
+		return PF_ERROR_B4WRITE;
 	}
 
 	memcpy(src, (void *) src_unaligned, 32);
@@ -356,6 +356,9 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 		//1) write (latch) to flash, with 500us pulse
 		writepulse((volatile u8 *)dest, reprog, TSP500);
 
+		if (!fwecheck()) {
+			return PF_ERROR_AFTWRITE;
+		}
 		//2) Program verify
 		*pFLMCR |= FLMCR_PV;
 		waitn(TSPV);	//F-ZTAT has 10 here
@@ -372,6 +375,10 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 			verifdata = *(volatile u32 *) (dest + cur);
 			srcdata = *(u32 *) (src + cur);
 			just_written = *(u32 *) (reprog + cur);
+
+			if (!fwecheck()) {
+				return PF_ERROR_VERIF;
+			}
 
 			if (verifdata != srcdata) {
 				//mismatch:
