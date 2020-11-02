@@ -110,7 +110,7 @@ void die_trace(void) {
  * the vbr reg will be set to point at this table at startup, so this can be anywhere in RAM.
  */
 
-#define IVT_ENTRIES 0x100
+#define IVT_ENTRIES 0xA5
 #define IVT_DEFAULTENTRY ((u32) &die_trace)
 #define ARRAY_SIZE(x)	(sizeof(x) / sizeof((x)[0]))
 

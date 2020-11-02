@@ -274,11 +274,11 @@ uint32_t platf_flash_eb(unsigned blockno) {
 		ferase(blockno);
 		if (ferasevf(blockno)) {
 			sweclear();
+			if (!fwecheck()) {
+				return PF_ERROR_AFTERASE;
+			}
 			return 0;
 		}
-	}
-	if (!fwecheck()) {
-		return PF_ERROR_AFTERASE;
 	}
 
 	/* haven't managed to get a succesful ferasevf() : badexit */
