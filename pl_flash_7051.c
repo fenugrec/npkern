@@ -363,11 +363,9 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 		pFLMCR = &FLASH.FLMCR2.BYTE;
 	}
 
-#if 0
 	if (!fwecheck()) {
 		return PF_ERROR_B4WRITE;
 	}
-#endif
 
 	memcpy(src, (void *) src_unaligned, 32);
 	memcpy(reprog, (void *) src, 32);
