@@ -56,6 +56,7 @@ This was hacked together by a33b
 //20MHz clock. Some critical timing depends on this being true,
 //WDT stuff in particular isn't macro-fied
 #define CPUFREQ	(20)
+#define ATUPRESCALAR (32)
 
 #define WDT_RSTCSR_SETTING 0x5A4F	//reset if TCNT overflows
 #define WDT_TCSR_ESTART (0xA578 | 0x06)	//write value to start with 1:4096 div (52.4 ms @ 20MHz), for erase runaway
@@ -64,8 +65,8 @@ This was hacked together by a33b
 
 #define WAITN_TCYCLE 4		/* clock cycles per loop, see asm */
 #define WAITN_CALCN(usec) (((usec) * CPUFREQ / WAITN_TCYCLE) + 1)
-#define WAITN_TSE_TCYCLE 15		/* clock cycles per loop, see asm */
-#define WAITN_TSE_CALCN(usec) (((usec) * CPUFREQ / WAITN_TSE_TCYCLE) - 64)
+//#define WAITN_TSE_TCYCLE 15		/* clock cycles per loop, see asm */
+#define WAITN_TSE_CALCN(usec) (((usec) * CPUFREQ / ATUPRESCALAR))
 
 /** Common timing constants */
 #define TSSWE	WAITN_CALCN(10)
@@ -145,11 +146,17 @@ static void waitn(unsigned loops) {
 	asm volatile ("bf 0b");
 }
 
-static void waitn_tse(unsigned loops) {
+static void waitn_tse() {
+	u32 end = ATU0.TCNT + TSE;
+	while (ATU0.TCNT < end)
+	{
+		manual_wdt();
+	}
+/*	
 	u32 tmp;
 	asm volatile ("0: dt %0":"=r"(tmp):"0"(loops):"cc");
 	manual_wdt();
-	asm volatile ("bf 0b");
+	asm volatile ("bf 0b");*/
 }
 
 
@@ -241,7 +248,7 @@ static void ferase(unsigned blockno) {
 	*pFLMCR |= FLMCR_ESU;
 	waitn(TSESU);
 	*pFLMCR |= FLMCR_E;	//start Erase pulse
-	waitn_tse(TSE);
+	waitn_tse();
 	*pFLMCR &= ~FLMCR_E;	//stop pulse
 	waitn(TCE);
 	*pFLMCR &= ~FLMCR_ESU;
