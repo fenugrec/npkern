@@ -5,3 +5,4 @@
 *.lst
 *.o
 *.su
+!precompiled/*.bin
