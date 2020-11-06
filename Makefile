@@ -7,7 +7,7 @@ PREFIX ?= sh-elf
 
 #possible choices : SH7058 SH7055_18 SH7055_35 SH7051
 #try "make BUILDWHAT=SH7055_18" to override this default.
-BUILDWHAT ?= SH7058
+BUILDWHAT ?= SH7051
 
 # Specify compiler to be used
 CC = $(PREFIX)-gcc
@@ -49,12 +49,12 @@ ASRC = start_705x.s
 SRC = cmd_parser.c eep_funcs.c main.c crc.c
 
 ifeq ($(BUILDWHAT), SH7051)
-	SRC += platf_7050h.c pl_flash_7051.c
+	SRC += platf_7050.c pl_flash_7051.c
 else ifeq ($(BUILDWHAT), SH7055_35)
-	SRC += platf_7055p.c pl_flash_7055_350nm.c
+	SRC += platf_7055.c pl_flash_7055_350nm.c
 else
 	#new 7055 or 7058, 180nm
-	SRC += platf_7055p.c pl_flash_705x_180nm.c
+	SRC += platf_7055.c pl_flash_705x_180nm.c
 endif
 
 

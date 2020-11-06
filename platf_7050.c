@@ -50,7 +50,7 @@ void INT_CMT1_CMTI1(void) {
 
 	wdt_tog();
 	CMT1.CMCNT = 0;
-	CMT1.CMCSR.BIT.CMF = 0;	//TRY compare match in lieu of no OCR on ATU
+	CMT1.CMCSR.BIT.CMF = 0;	//compare match in lieu of no OCR on ATU
 	return;
 }
 
@@ -132,7 +132,7 @@ static void build_ivt(u32 *dest) {
 
 	WRITEVECT(IVTN_POR_SP, stackinit);
 	WRITEVECT(IVTN_MR_SP, stackinit);
-	WRITEVECT(IVTN_INT_CMT1_CMTI1, &INT_CMT1_CMTI1); //TRY compare match in lieu of no OCR on ATU
+	WRITEVECT(IVTN_INT_CMT1_CMTI1, &INT_CMT1_CMTI1); // Compare match in lieu of no OCR on ATU
 
 }
 
