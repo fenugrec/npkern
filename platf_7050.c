@@ -208,7 +208,7 @@ void init_wdt(void) {
 	CMT1.CMCSR.BIT.CMIE = 1;	//CMT1 compare match int
 
 	CMT1.CMCSR.BIT.CKS = 0x01;		//clksel : 1:32, int_clock/32 => 625kHz(1.6us increments)
-	// no prescalar, so 20MHz/32 =625 kHz (1.6us) gives a measurable span of 104 ms
+	// no prescaler, so 20MHz/32 =625 kHz (1.6us) gives a measurable span of 104 ms
 	CMT.CMSTR.BIT.STR1 = 1;		//start only CMCNT1
 	return;
 }
@@ -228,13 +228,3 @@ void die(void) {
 	return;
 }
 
-/* spinloop for X millisecs */
-#if 0	//unused atm
-void waitms(unsigned ms) {
-	uint32_t t0, t1;
-	t0 = ATU0.TCNT;
-	t1 = t0 + MCLK_GETTS(ms);
-	while (ATU0.TCNT < t1) {}
-	return;
-}
-#endif
