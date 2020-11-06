@@ -316,8 +316,6 @@ uint32_t platf_flash_eb(unsigned blockno) {
 /** Copy 32-byte chunk + apply write pulse for tsp=500us
  */
 static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
-//	int prev_imask = get_imask();
-//	set_imask(0x0F);
 	unsigned uim;
 	u32 cur;
 

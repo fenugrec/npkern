@@ -244,13 +244,3 @@ void die(void) {
 	return;
 }
 
-/* spinloop for X millisecs */
-#if 0	//unused atm
-void waitms(unsigned ms) {
-	uint32_t t0, t1;
-	t0 = ATU0.TCNT;
-	t1 = t0 + MCLK_GETTS(ms);
-	while (ATU0.TCNT < t1) {}
-	return;
-}
-#endif

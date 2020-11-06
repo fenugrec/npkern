@@ -128,8 +128,6 @@ void init_wdt(void);
  */
 void die(void);
 
-/** spinloop for X millisecs */
-//void waitms(unsigned ms);
 
 #endif
 
