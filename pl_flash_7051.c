@@ -62,10 +62,10 @@ This was hacked together by a33b
 #define WDT_TCSR_WSTART (0xA578 | 0x05)	//write value to start with 1:1024 div (13.1 ms @ 20MHz), for write runaway
 #define WDT_TCSR_STOP 0xA558	//write value to stop WDT count
 
-//KEN TODO recheck calculation
 #define WAITN_TCYCLE 4		/* clock cycles per loop, see asm */
 #define WAITN_CALCN(usec) (((usec) * CPUFREQ / WAITN_TCYCLE) + 1)
-
+#define WAITN_TSE_TCYCLE 15		/* clock cycles per loop, see asm */
+#define WAITN_TSE_CALCN(usec) (((usec) * CPUFREQ / WAITN_TSE_TCYCLE) - 64)
 
 /** Common timing constants */
 #define TSSWE	WAITN_CALCN(10)
@@ -73,7 +73,7 @@ This was hacked together by a33b
 
 /** Erase timing constants */
 #define TSESU	WAITN_CALCN(200)
-#define TSE	WAITN_CALCN(5000UL)
+#define TSE	WAITN_TSE_CALCN(5000UL) //need to toggle ext WDT pin during wait
 #define TCE	WAITN_CALCN(10)
 #define TCESU	WAITN_CALCN(10)
 #define TSEV	WAITN_CALCN(10)	/******** Renesas has 20 for this !?? */
@@ -145,7 +145,21 @@ static void waitn(unsigned loops) {
 	asm volatile ("bf 0b");
 }
 
+static void waitn_tse(unsigned loops) {
+	u32 tmp;
+	asm volatile ("0: dt %0":"=r"(tmp):"0"(loops):"cc");
+	manual_wdt();
+	asm volatile ("bf 0b");
+}
 
+
+void manual_wdt(void) {
+    if (CMT1.CMCNT >= (WDT_MAXCNT - 50)) { // -50 so we can hopefully be close enough after waitn calcs
+		wdt_tog();
+		CMT1.CMCNT = 0;
+		CMT1.CMCSR.BIT.CMF = 0;
+    }
+}
 
 /** Check FWE and FLER bits
  * ret 1 if ok
@@ -158,6 +172,7 @@ static bool fwecheck(void) {
 
 /** Set SWE bit and wait */
 static void sweset(void) {
+	CMT1.CMCSR.BIT.CMIE = 0;	// Disable interrupt on 7051 for erase/write
 	FLASH.FLMCR1.BIT.SWE = 1;
 	waitn(TSSWE);
 	return;
@@ -166,6 +181,7 @@ static void sweset(void) {
 /** Clear SWE bit and wait */
 static void sweclear(void) {
 	FLASH.FLMCR1.BIT.SWE = 0;
+	CMT1.CMCSR.BIT.CMIE = 1;	// Re-enable interrupt
 	waitn(TCSWE);
 }
 
@@ -186,6 +202,7 @@ static bool ferasevf(unsigned blockno) {
 	for (; cur < end; cur++) {
 		*pFLMCR |= FLMCR_EV;
 		waitn(TSEV);
+		manual_wdt();
 		*cur = 0xFFFFFFFF;
 		waitn(TSEVR);
 		if (*cur != 0xFFFFFFFF) {
@@ -219,16 +236,18 @@ static void ferase(unsigned blockno) {
 
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;	//this also clears TCNT
 	WDT.WRITE.TCSR = WDT_TCSR_ESTART;
+	manual_wdt();
 
 	*pFLMCR |= FLMCR_ESU;
 	waitn(TSESU);
 	*pFLMCR |= FLMCR_E;	//start Erase pulse
-	waitn(TSE);
+	waitn_tse(TSE);
 	*pFLMCR &= ~FLMCR_E;	//stop pulse
 	waitn(TCE);
 	*pFLMCR &= ~FLMCR_ESU;
 	waitn(TCESU);
 
+	manual_wdt();
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 
 	FLASH.EBR1.BYTE = 0;
@@ -274,9 +293,11 @@ uint32_t platf_flash_eb(unsigned blockno) {
 		ferase(blockno);
 		if (ferasevf(blockno)) {
 			sweclear();
+#if 0
 			if (!fwecheck()) {
 				return PF_ERROR_AFTERASE;
 			}
+#endif
 			return 0;
 		}
 	}
@@ -308,6 +329,7 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 	WDT.WRITE.TCSR = WDT_TCSR_WSTART;
+	manual_wdt();
 
 	*pFLMCR |= FLMCR_PSU;
 	waitn(TSPSU);		//F-ZTAT has 300 here
@@ -341,9 +363,11 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 		pFLMCR = &FLASH.FLMCR2.BYTE;
 	}
 
+#if 0
 	if (!fwecheck()) {
 		return PF_ERROR_B4WRITE;
 	}
+#endif
 
 	memcpy(src, (void *) src_unaligned, 32);
 	memcpy(reprog, (void *) src, 32);
@@ -356,13 +380,17 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 		unsigned cur;
 
 		m = 0;
-
+		manual_wdt();
+		
 		//1) write (latch) to flash, with 500us pulse
 		writepulse((volatile u8 *)dest, reprog, TSP500);
-
+		
+		manual_wdt();
+#if 0
 		if (!fwecheck()) {
 			return PF_ERROR_AFTWRITE;
 		}
+#endif
 		//2) Program verify
 		*pFLMCR |= FLMCR_PV;
 		waitn(TSPV);	//F-ZTAT has 10 here
@@ -380,24 +408,18 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 			srcdata = *(u32 *) (src + cur);
 			just_written = *(u32 *) (reprog + cur);
 
+			manual_wdt();
+#if 0
 			if (!fwecheck()) {
 				return PF_ERROR_VERIF;
 			}
+#endif
 
 			if (verifdata != srcdata) {
 				//mismatch:
 				m = 1;
 			}
 
-/*	This check is not in 7050
-		if (n <= 6) {
-				// compute "additional programming data"
-				// The datasheet isn't very clear about this, and interpretations vary (Nissan kernel vs FDT example)
-				// This follows what FDT does.
-				* (u32 *) (addit + cur) = verifdata | just_written;
-
-			}
-*/
 			if (srcdata & ~verifdata) {
 				//wanted '1' bits, but somehow got '0's : serious error
 				rv = PFWB_VERIFAIL;
@@ -411,12 +433,6 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 		*pFLMCR &= ~FLMCR_PV;
 		waitn(TCPV);	//F-ZTAT has 5 here
 
-/*	this check is not in 7050
-		if (n <= 6) {
-			// write additional reprog data
-			writepulse((volatile u8 *) dest, addit, TSP10);
-		}
-*/
 		if (!m) {
 			//success
 			sweclear();
