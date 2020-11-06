@@ -145,7 +145,19 @@ static void waitn(unsigned loops) {
 	asm volatile ("bf 0b");
 }
 
-static void waitn_tse() {
+//implemented in main.c
+void wdt_tog(void);
+
+
+static void manual_wdt(void) {
+    if (CMT1.CMCNT >= (WDT_MAXCNT - 50)) { // -50 so we can hopefully be close enough after waitn calcs
+		wdt_tog();
+		CMT1.CMCNT = 0;
+		CMT1.CMCSR.BIT.CMF = 0;
+    }
+}
+
+static void waitn_tse(void) {
 	u32 start = ATU0.TCNT;
 	while ((ATU0.TCNT - start) < TSE)
 	{
@@ -153,14 +165,6 @@ static void waitn_tse() {
 	}
 }
 
-
-void manual_wdt(void) {
-    if (CMT1.CMCNT >= (WDT_MAXCNT - 50)) { // -50 so we can hopefully be close enough after waitn calcs
-		wdt_tog();
-		CMT1.CMCNT = 0;
-		CMT1.CMCSR.BIT.CMF = 0;
-    }
-}
 
 /** Check FWE and FLER bits
  * ret 1 if ok
@@ -397,7 +401,6 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 		for (cur = 0; cur < 32; cur += 4) {
 			u32 verifdata;
 			u32 srcdata;
-			u32 just_written;
 
 			//dummy write 0xFFFFFFFF
 			*(volatile u32 *) (dest + cur) = (u32) -1;
@@ -405,7 +408,6 @@ static u32 flash_write32(u32 dest, u32 src_unaligned) {
 
 			verifdata = *(volatile u32 *) (dest + cur);
 			srcdata = *(u32 *) (src + cur);
-			just_written = *(u32 *) (reprog + cur);
 
 			manual_wdt();
 #if 0
