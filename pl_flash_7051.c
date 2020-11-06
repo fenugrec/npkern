@@ -65,7 +65,6 @@ This was hacked together by a33b
 
 #define WAITN_TCYCLE 4		/* clock cycles per loop, see asm */
 #define WAITN_CALCN(usec) (((usec) * CPUFREQ / WAITN_TCYCLE) + 1)
-//#define WAITN_TSE_TCYCLE 15		/* clock cycles per loop, see asm */
 #define WAITN_TSE_CALCN(usec) (((usec) * CPUFREQ / ATUPRESCALAR))
 
 /** Common timing constants */
@@ -147,16 +146,11 @@ static void waitn(unsigned loops) {
 }
 
 static void waitn_tse() {
-	u32 end = ATU0.TCNT + TSE;
-	while (ATU0.TCNT < end)
+	u32 start = ATU0.TCNT;
+	while ((ATU0.TCNT - start) < TSE)
 	{
 		manual_wdt();
 	}
-/*	
-	u32 tmp;
-	asm volatile ("0: dt %0":"=r"(tmp):"0"(loops):"cc");
-	manual_wdt();
-	asm volatile ("bf 0b");*/
 }
 
 
