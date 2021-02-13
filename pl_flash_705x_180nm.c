@@ -186,6 +186,10 @@ bool platf_flash_init(u8 *err) {
 	nop();
 	nop();
 	nop();
+	nop();
+	nop();
+	nop();
+	nop();
 	/* from datasheet:
 	 *	If the value of the DPFR parameter is the same as before downloading (e.g. H'FF),
 	 * the address setting of the download destination in FTDAR may be abnormal. In this
@@ -218,6 +222,10 @@ bool platf_flash_init(u8 *err) {
 	FLASH.FTDAR.BYTE = FTDAR_WRITE;
 	FLASH.FKEY = 0xA5;
 	FLASH.FCCS.BIT.SCO = 1;
+	nop();
+	nop();
+	nop();
+	nop();
 	nop();
 	nop();
 	nop();
