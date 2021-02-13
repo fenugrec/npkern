@@ -161,7 +161,7 @@ bool platf_flash_init(u8 *err) {
 		return 0;
 	}
 
-	if (FLASH.RAMER.BIT.RAMS) {
+	if (FLASH.RAMER.WORD) {
 		// RAMER enabled; can't proceed
 		*err = SID34_BADRAMER;
 		return 0;
