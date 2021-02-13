@@ -186,9 +186,27 @@ bool platf_flash_init(u8 *err) {
 	nop();
 	nop();
 	nop();
-	if (*DPFR) {
-		//SCO download error.
-		*err = SID34_BADDL_ERASE;
+	/* from datasheet:
+	 *	If the value of the DPFR parameter is the same as before downloading (e.g. H'FF),
+	 * the address setting of the download destination in FTDAR may be abnormal. In this
+	 * case, confirm the setting of the TDER bit (bit 7) in FTDAR.
+	 * If the value of the DPFR parameter is different from before downloading, check the SS
+	 * bit (bit 2) and the FK bit (bit 1) in the DPFR parameter to ensure that the download
+	 * program selection and FKEY register setting were normal, respectively.
+	 */
+	u8 DPFR_tmp = *DPFR;
+	if (DPFR_tmp == 0xFF) {
+		if (FLASH.FTDAR.BIT.TDER) {
+			*err = SID34_BADINIT_TDER;
+			goto badexit;
+		} else {
+			//DPFR still 0xFF but TDER not set ?? no clue
+			*err = SID34_BADDL_ERASE;
+			goto badexit;
+		}
+	} else if (DPFR_tmp) {
+		//DPFR changed but non-zero : keep SS and FK bits
+		*err = (DPFR_tmp & 0x06) | SID34_DPFR_BASE;
 		goto badexit;
 	}
 
@@ -204,9 +222,19 @@ bool platf_flash_init(u8 *err) {
 	nop();
 	nop();
 	nop();
-	if (*DPFR) {
-		//SCO download error.
-		*err = SID34_BADDL_WRITE;
+	DPFR_tmp = *DPFR;
+	if (DPFR_tmp == 0xFF) {
+		if (FLASH.FTDAR.BIT.TDER) {
+			*err = SID34_BADINIT_TDER;
+			goto badexit;
+		} else {
+			//DPFR still 0xFF but TDER not set ?? no clue
+			*err = SID34_BADDL_WRITE;
+			goto badexit;
+		}
+	} else if (DPFR_tmp) {
+		//DPFR changed but non-zero : keep SS and FK bits
+		*err = (DPFR_tmp & 0x06) | SID34_DPFR_BASE;
 		goto badexit;
 	}
 
@@ -253,7 +281,7 @@ uint32_t platf_flash_eb(unsigned blockno) {
 	FPFR = fl_erase(blockno);
 	if (FPFR) {
 		FLASH.FKEY = 0;
-		return ((FPFR & 0xFF) | 0x80);
+		return ((FPFR & 0x06) | PF_FPFR_BASE);
 	}
 	FLASH.FKEY = 0;
 #ifdef POSTERASE_VERIFY
@@ -293,7 +321,7 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 			rv = flash_write128(dest, src);
 		}
 		if (rv) {
-			return (rv & 0xFF) | 0x80;	//tweak into valid NRC
+			return (rv & 0x06) | PF_FPFR_BASE;	//tweak into valid NRC
 		}
 
 		if (memcmp((void *)dest, (void *)src, 128) != 0) return PFWB_VERIFAIL;
