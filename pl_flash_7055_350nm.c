@@ -82,6 +82,7 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #define FL_MAXROM	(512*1024UL - 1UL)
 
 #define FLASH_180_FKEY ((volatile uint8_t *) 0xFFFFE804)	//exists only on 180nm ICs. Used for process size detection
+#define HUDI_SDSR_RESETVAL 0x0201	//unfortunately same value on 180 and 350nm, but different on 7058 etc
 
 
 /********** Timing defs
@@ -497,6 +498,20 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
 bool platf_flash_init(u8 *err) {
 	reflash_enabled = 0;
+
+	// test : read SDSR. Can only differentiate between 7055* and 7058
+	if (HUDI.SDSR.WORD != HUDI_SDSR_RESETVAL) {
+		*err = PF_SILICON;
+		return 0;
+	}
+
+	// alternate test for 180 vs 350nm : try to set FLMCR2.SWE .This corresponds to bit 0x40 of FPCS on 180nm which is read-only.
+	FLASH.FLMCR2.BIT.SWE2 = 1;
+	if (FLASH.FLMCR2.BIT.SWE2 != 1) {
+		*err = PF_SILICON;
+		return 0;
+	}
+	FLASH.FLMCR2.BIT.SWE2 = 0;
 
 	//Check 180nm vs 350nm : on 350nm, FKEY is undefined; 180nm has an 8bit RW register
 	*FLASH_180_FKEY = 0x33;
