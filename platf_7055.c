@@ -232,14 +232,18 @@ void init_wdt(void) {
 #define WDT_RSTCSR_SETTING 0x5A5F;	//power-on reset if TCNT overflows
 
 /*
- * Some ECUs (VC264) don't seem to reset properly with just
- * the external WDT.
- * This should work on 7055_350nm, 7055/7058 180nm
+ * Some ECUs (VC264) don't seem to reset properly with just the external WDT.
+ * But, internal WDT-triggered POR doesn't reset certain periph regs
+ * which *may* be causing rare issues (spurious ignition on stopkernel !?).
+ * Or were those because I previously wasn't setting vbr=0 ?
  */
 void die(void) {
 	set_imask(0x0F);
-	WDT.WRITE.RSTCSR = WDT_RSTCSR_SETTING;
-	WDT.WRITE.TCSR = (0xA578 | 0);	// clk div2 for ~ 12us overflow
+	set_vbr(0);
+	trapa(0x3F);
+	//unreachable
+//	WDT.WRITE.RSTCSR = WDT_RSTCSR_SETTING;
+//	WDT.WRITE.TCSR = (0xA578 | 0);	// clk div2 for ~ 12us overflow
 	while (1) {}
 	return;
 }
