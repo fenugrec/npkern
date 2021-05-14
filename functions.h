@@ -89,12 +89,6 @@ FUNCS_DECL void stbank(long data, int rn, int bn) __attribute__ ((always_inline)
 FUNCS_DECL long ldbank(int rn, int bn) __attribute__ ((always_inline));
 #endif
 
-FUNCS_DECL int get_sp(void)__attribute__ ((always_inline));
-FUNCS_DECL void set_imask(unsigned long mask)__attribute__ ((always_inline));
-FUNCS_DECL int get_imask(void)__attribute__ ((always_inline));
-
-
-
 
 extern __inline__ void set_cr(int cr)
 {
@@ -112,6 +106,7 @@ extern __inline__ int get_cr(void)
 }
 
 /** get current stack pointer (r15) */
+FUNCS_DECL int get_sp(void)__attribute__ ((always_inline));
 extern __inline__ int get_sp(void)
 {
 	long val;
