@@ -565,7 +565,7 @@ static void cmd_conf(struct iso14230_msg *msg) {
 	u32 tmp;
 
 	resp[0] = SID_CONF + 0x40;
-	if (msg->datalen < 3) goto bad12;
+	if (msg->datalen < 2) goto bad12;
 
 	switch (msg->data[1]) {
 	case SID_CONF_SETSPEED:
