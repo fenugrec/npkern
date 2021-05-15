@@ -19,6 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+void set_lasterr(u8 err);	//see SID_CONF_LASTERR
+
+
 /* SID_CONF error codes */
 #define SID_CONF_CKS1_BADCKS	0x77	//NRC when crc is bad
 

@@ -39,7 +39,6 @@ static const u8 npk_ver_string[] = SID_RECUID_PRC NPK_VER;
 /* low-level error code, to give more detail about errors than the SID 7F NRC can provide,
  * without requiring the error string list of nisprog to be updated.
  */
-
 static u8 lasterr = 0;
 
 /* make receiving slightly easier maybe */

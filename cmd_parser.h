@@ -22,5 +22,3 @@
 void cmd_init(u8 brrdiv);
 
 void cmd_loop(void);
-
-void set_lasterr(u8 err);
