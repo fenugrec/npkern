@@ -569,7 +569,7 @@ static void cmd_conf(struct iso14230_msg *msg) {
 		/* set eeprom_read() function address <SID_CONF> <SID_CONF_SETEEPR> <AH> <AM> <AL> */
 		if (msg->datalen != 5) goto bad12;
 		tmp = (msg->data[2] << 16) | (msg->data[3] << 8) | msg->data[4];
-		eep_setptr((void *) tmp);
+		eep_setptr(tmp);
 		iso_sendpkt(resp, 1);
 		return;
 		break;

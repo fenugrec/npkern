@@ -124,13 +124,13 @@ const u32 fblocks[] = {
  * r5 : second arg
  */
 
-static uint32_t (*const fl_erase_init)(uint32_t FPEFEQ, uint32_t FUBRA) = (void *) FL_ERASE_BASE + 32;
-static uint32_t (*const fl_write_init)(uint32_t FPEFEQ, uint32_t FUBRA) = (void *) FL_WRITE_BASE + 32;
-static uint32_t (*const fl_erase)(uint32_t FEBS) = (void *) FL_ERASE_BASE + 16;
+static uint32_t (*const fl_erase_init)(uint32_t FPEFEQ, uint32_t FUBRA) = (void *) ((u32) FL_ERASE_BASE + 32);
+static uint32_t (*const fl_write_init)(uint32_t FPEFEQ, uint32_t FUBRA) = (void *) ((u32) FL_WRITE_BASE + 32);
+static uint32_t (*const fl_erase)(uint32_t FEBS) = (void *) ((u32) FL_ERASE_BASE + 16);
 /** FMPAR : destination in ROM;
  * FMPDR : source data
  */
-static uint32_t (*const fl_write)(uint32_t FMPDR, uint32_t FMPAR) = (void *) FL_WRITE_BASE + 16;
+static uint32_t (*const fl_write)(uint32_t FMPDR, uint32_t FMPAR) = (void *) ((u32) FL_WRITE_BASE + 16);
 
 
 

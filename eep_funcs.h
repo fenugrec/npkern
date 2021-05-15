@@ -25,7 +25,7 @@
 void eep_read16(uint8_t addr, uint16_t *dest);
 
 //set the address of the ROM's eeprom_read function
-void eep_setptr(void *newaddr);
+void eep_setptr(uint32_t newaddr);
 
 
 #endif
