@@ -1,3 +1,5 @@
+#Unmaintained, use cmake instead
+
 #This can be changed at compile time as required by
 #the gcc toolchain binaries, i.e. if gcc is installed as
 #"sh4-none-elf-gcc", then run "make PREFIX=sh4-none-elf ..."

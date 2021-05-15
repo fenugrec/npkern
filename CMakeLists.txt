@@ -1,3 +1,7 @@
+# TODO:
+# - generate .lst and .map files, and stack-usage
+# - 'install' .bin files to $sourcedir/precompiled
+
 cmake_minimum_required(VERSION 3.0)
 
 set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH "Default install prefix")
@@ -66,7 +70,7 @@ function(show_object_size target)
 endfunction()
 
 
-#cant really automate the targets because the name and sourcefile and linkerscripts vary
+#cant really automate the targets because sourcefiles and linkerscripts vary
 
 add_executable(npk_SH7051 ${COMMON_SRCS} platf_7050.c pl_flash_7051.c)
 add_executable(npk_SH7055_35 ${COMMON_SRCS} platf_7055.c pl_flash_7055_350nm.c)
@@ -74,16 +78,18 @@ add_executable(npk_SH7055_18 ${COMMON_SRCS} platf_7055.c pl_flash_705x_180nm.c)
 add_executable(npk_SH7058 ${COMMON_SRCS} platf_7055.c pl_flash_705x_180nm.c)
 
 
-# So far, only 7051 needs a different linker script
+# Currently, only 7051 needs a different linker script
 target_link_options(npk_SH7051 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7051.ld)
 target_link_options(npk_SH7055_35 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7055_7058.ld)
 target_link_options(npk_SH7055_18 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7055_7058.ld)
 target_link_options(npk_SH7058 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7055_7058.ld)
 
 
+# list all targets here
 set(TGT_LIST "SH7051" "SH7055_35" "SH7055_18" "SH7058")
 
-## common operations
+
+## common operations for all targets
 
 foreach (TGTNAME IN LISTS TGT_LIST)
 	message(STATUS ${TGTNAME})
@@ -93,5 +99,3 @@ foreach (TGTNAME IN LISTS TGT_LIST)
 	make_bin_file(npk_${TGTNAME})
 	show_object_size(npk_${TGTNAME})
 endforeach()
-
-
