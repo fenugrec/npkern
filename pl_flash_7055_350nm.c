@@ -68,9 +68,11 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 
 enum internal_errcodes {
 	ERR_OK = 0,
-	ERR_SDSR,	// HUDI.SDSR mismatch
-	ERR_SWE,	//SWE test (180 vs 350nm)
-	ERR_FKEY,	//FKEY test (180 vs 350nm)
+		// 3 following errors can be ORed
+	ERR_SDSR = 1,	// HUDI.SDSR mismatch
+	ERR_SWE = 2,	//SWE test (180 vs 350nm)
+	ERR_FKEY = 4,	//FKEY test (180 vs 350nm)
+	//5,6,7 : combinations
 };
 
 /*********  Reflashing defines
@@ -505,20 +507,21 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len) {
 
 bool platf_flash_init(u8 *err) {
 	reflash_enabled = 0;
+	u8 errval = 0;
 
 	// test : read SDSR. Can only differentiate between 7055* and 7058
 	if (HUDI.SDSR.WORD != HUDI_SDSR_RESETVAL) {
 		*err = PF_SILICON;
-		set_lasterr(ERR_SDSR);
-		return 0;
+		errval |= ERR_SDSR;
+		//return 0;
 	}
 
 	// alternate test for 180 vs 350nm : try to set FLMCR2.SWE .This corresponds to bit 0x40 of FPCS on 180nm which is read-only.
 	FLASH.FLMCR2.BIT.SWE2 = 1;
 	if (FLASH.FLMCR2.BIT.SWE2 != 1) {
 		*err = PF_SILICON;
-		set_lasterr(ERR_SWE);
-		return 0;
+		errval |= ERR_SWE;
+		//return 0;
 	}
 	FLASH.FLMCR2.BIT.SWE2 = 0;
 
@@ -526,7 +529,11 @@ bool platf_flash_init(u8 *err) {
 	*FLASH_180_FKEY = 0x33;
 	if (*FLASH_180_FKEY == 0x33) {
 		*err = PF_SILICON;
-		set_lasterr(ERR_FKEY);
+		errval |= ERR_FKEY;
+		//return 0;
+	}
+	if (errval) {
+		set_lasterr(errval);
 		return 0;
 	}
 
