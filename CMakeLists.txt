@@ -34,15 +34,14 @@ add_link_options(-nostartfiles -Wl,-gc-sections)
 # a dummy output that's not actually produced, in order
 # to force version.cmake to always be re-run before the build
 
-ADD_CUSTOM_COMMAND(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/version.c
-           ${CMAKE_CURRENT_BINARY_DIR}/_version.c
-    COMMAND ${CMAKE_COMMAND}
-			-D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
-            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gitversion.cmake
-	)
+add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/version.h"
+	COMMAND ${CMAKE_COMMAND}
+		-D SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
+		-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gitversion.cmake
+)
 
 set (COMMON_SRCS cmd_parser.c eep_funcs.c main.c crc.c start_705x.s
+	${CMAKE_CURRENT_BINARY_DIR}/version.h
 	)
 
 

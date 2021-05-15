@@ -6,38 +6,33 @@ execute_process(COMMAND git log --pretty=format:'%h' -n 1
 				WORKING_DIRECTORY ${SRCDIR}
                 ERROR_QUIET)
 
+# count # of commits
+execute_process(COMMAND git rev-list --count HEAD
+				OUTPUT_VARIABLE GIT_NCOMMITS
+				WORKING_DIRECTORY ${SRCDIR}
+                ERROR_QUIET)
+
 # Check whether we got any revision (which isn't
 # always the case, e.g. when someone downloaded a zip
 # file from Github instead of a checkout)
 if ("${GIT_REV}" STREQUAL "")
     set(GIT_REV "N/A")
-    set(GIT_DIFF "")
-    set(GIT_TAG "N/A")
-    set(GIT_BRANCH "N/A")
+    set(GIT_NCOMMITS "x")
 else()
-    execute_process(
-        COMMAND bash -c "git diff --quiet --exit-code || echo +"
-        OUTPUT_VARIABLE GIT_DIFF
-		WORKING_DIRECTORY ${SRCDIR})
-    execute_process(
-        COMMAND git describe --exact-match --tags
-        OUTPUT_VARIABLE GIT_TAG
-		ERROR_QUIET
-		WORKING_DIRECTORY ${SRCDIR})
-
     string(STRIP "${GIT_REV}" GIT_REV)
     string(SUBSTRING "${GIT_REV}" 1 7 GIT_REV)
-    string(STRIP "${GIT_DIFF}" GIT_DIFF)
 endif()
 
-set(VERSION "const char* GIT_REV=\"${GIT_REV}${GIT_DIFF}\";")
+string(STRIP "${GIT_NCOMMITS}" GIT_NCOMMITS)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/version.c)
-    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.c VERSION_)
+set(VERSION "#define NPK_COMMIT \"${GIT_NCOMMITS}-${GIT_REV}\"\n")
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/version.h)
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/version.h VERSION_)
 else()
     set(VERSION_ "")
 endif()
 
 if (NOT "${VERSION}" STREQUAL "${VERSION_}")
-    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/version.c "${VERSION}")
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/version.h "${VERSION}")
 endif()

@@ -6,3 +6,4 @@
 *.o
 *.su
 !precompiled/*.bin
+build/
