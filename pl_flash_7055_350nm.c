@@ -66,6 +66,13 @@ sh-elf-size with write + erase C implems: 4292	1024	548 => 5864, delta = 912B
 #include "iso_cmds.h"
 #include "npk_errcodes.h"
 
+enum internal_errcodes {
+	ERR_OK = 0,
+	ERR_SDSR,	// HUDI.SDSR mismatch
+	ERR_SWE,	//SWE test (180 vs 350nm)
+	ERR_FKEY,	//FKEY test (180 vs 350nm)
+};
+
 /*********  Reflashing defines
  *
  * This is for SH7055 (0.35um) and assumes this RAM map (see .ld file)
@@ -502,6 +509,7 @@ bool platf_flash_init(u8 *err) {
 	// test : read SDSR. Can only differentiate between 7055* and 7058
 	if (HUDI.SDSR.WORD != HUDI_SDSR_RESETVAL) {
 		*err = PF_SILICON;
+		set_lasterr(ERR_SDSR);
 		return 0;
 	}
 
@@ -509,6 +517,7 @@ bool platf_flash_init(u8 *err) {
 	FLASH.FLMCR2.BIT.SWE2 = 1;
 	if (FLASH.FLMCR2.BIT.SWE2 != 1) {
 		*err = PF_SILICON;
+		set_lasterr(ERR_SWE);
 		return 0;
 	}
 	FLASH.FLMCR2.BIT.SWE2 = 0;
@@ -517,6 +526,7 @@ bool platf_flash_init(u8 *err) {
 	*FLASH_180_FKEY = 0x33;
 	if (*FLASH_180_FKEY == 0x33) {
 		*err = PF_SILICON;
+		set_lasterr(ERR_FKEY);
 		return 0;
 	}
 
