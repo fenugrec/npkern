@@ -27,6 +27,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CPU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wfo
 set(ASM_OPTIONS "-x assembler-with-cpp")
 set(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
+add_link_options(-nostartfiles -Wl,-gc-sections)
+
 
 # Add a custom command that produces version.c, plus
 # a dummy output that's not actually produced, in order
@@ -89,7 +91,6 @@ foreach (TGTNAME IN LISTS TGT_LIST)
 	target_compile_definitions(npk_${TGTNAME} PRIVATE PLATF=\"${TGTNAME}\")
 	target_compile_definitions(npk_${TGTNAME} PRIVATE ${TGTNAME})
 	target_include_directories(npk_${TGTNAME} PUBLIC ${PROJECT_BINARY_DIR})
-	target_link_options(npk_${TGTNAME} PRIVATE -nostartfiles -Wl,-gc-sections)
 	make_bin_file(npk_${TGTNAME})
 	show_object_size(npk_${TGTNAME})
 endforeach()
