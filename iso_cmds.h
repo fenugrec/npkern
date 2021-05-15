@@ -54,6 +54,7 @@
 		#define ROMCRC_CHUNKSIZE 256
 	#define SID_CONF_R16 0x04		/* for debugging : do a 16bit access read at given adress in RAM (top byte 0xFF)
 									* <SID_CONF> <SID_CONF_R16> <A2> <A1> <A0> */
+	#define SID_CONF_LASTERR 0x05	// get last internal error code then clear to 0 (ERR_OK)
 
 #define SID_FLREQ 0x34	/* RequestDownload */
 #define SID_STARTCOMM 0x81 /* startCommunication */

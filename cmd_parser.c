@@ -36,6 +36,12 @@
  */
 static const u8 npk_ver_string[] = SID_RECUID_PRC NPK_VER;
 
+/* low-level error code, to give more detail about errors than the SID 7F NRC can provide,
+ * without requiring the error string list of nisprog to be updated.
+ */
+
+static u8 lasterr = 0;
+
 /* make receiving slightly easier maybe */
 struct iso14230_msg {
 	int	hdrlen;		//expected header length : 1 (len-in-fmt), 2(fmt + len), 3(fmt+addr), 4(fmt+addr+len)
@@ -52,6 +58,11 @@ struct iso14230_msg {
  * We just need to make sure the comms functions (iso_sendpkt, tx_7F etc) use their own
  * private buffers. */
 static u8 txbuf[256];
+
+
+void set_lasterr(u8 err) {
+	lasterr = err;
+}
 
 /** simple 8-bit sum */
 static uint8_t cks_u8(const uint8_t * data, unsigned int len) {
@@ -583,6 +594,12 @@ static void cmd_conf(struct iso14230_msg *msg) {
 			return;
 		}
 		iso_sendpkt(resp, 1);
+		return;
+		break;
+	case SID_CONF_LASTERR:
+		resp[1] = lasterr;
+		lasterr = 0;
+		iso_sendpkt(resp, 2);
 		return;
 		break;
 #ifdef DIAG_U16READ

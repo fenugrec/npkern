@@ -17,6 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "stypes.h"
+
 void cmd_init(u8 brrdiv);
 
 void cmd_loop(void);
+
+void set_lasterr(u8 err);
