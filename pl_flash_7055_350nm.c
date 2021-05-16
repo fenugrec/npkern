@@ -509,11 +509,13 @@ bool platf_flash_init(u8 *err) {
 	reflash_enabled = 0;
 	u8 errval = 0;
 
-	// test : read SDSR. Can only differentiate between 7055* and 7058
-	if (HUDI.SDSR.WORD != HUDI_SDSR_RESETVAL) {
+	// 3 tests to check 180nm vs 350nm
+
+	// read SDSR. Can only differentiate between 7055* and 7058 in theory,
+	// but doesn't work 100% reliably : fails on some known 7055_350nm ECUs
+	if (0 && (HUDI.SDSR.WORD != HUDI_SDSR_RESETVAL)) {
 		*err = PF_SILICON;
 		errval |= ERR_SDSR;
-		//return 0;
 	}
 
 	// alternate test for 180 vs 350nm : try to set FLMCR2.SWE .This corresponds to bit 0x40 of FPCS on 180nm which is read-only.
@@ -521,11 +523,10 @@ bool platf_flash_init(u8 *err) {
 	if (FLASH.FLMCR2.BIT.SWE2 != 1) {
 		*err = PF_SILICON;
 		errval |= ERR_SWE;
-		//return 0;
 	}
 	FLASH.FLMCR2.BIT.SWE2 = 0;
 
-	//Check 180nm vs 350nm : on 350nm, FKEY is undefined; 180nm has an 8bit RW register
+	//on 350nm, FKEY is undefined; 180nm has an 8bit RW register
 	*FLASH_180_FKEY = 0x33;
 	if (*FLASH_180_FKEY == 0x33) {
 		*err = PF_SILICON;
