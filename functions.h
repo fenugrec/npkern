@@ -1,4 +1,8 @@
-/* Source : KPIT GNU SH distribution */
+/* Source : KPIT GNU SH distribution
+ * WARNING !!
+ * original implementation has buggy implementations for set_imask() and possibly others,
+ * where the inline asm was missing some registers in the clobberlist.
+ */
 /* reordered, and declarations filtered with ifdefs to reduce warnings,
  * Added missing implementations:
 	sleep
@@ -120,8 +124,8 @@ extern __inline__ void set_imask(unsigned long mask)
 	mask <<= 4;
 	mask &= 0xf0;
 
-	asm("stc   sr,r0");
-	asm("mov   #0xff,r3");
+	asm("stc   sr,r0":::"r0");
+	asm("mov   #0xff,r3":::"r3");
 	asm("shll8 r3");
 	asm("add   #0x0f,r3");
 	asm("and   r3,r0");
@@ -146,7 +150,7 @@ extern __inline__ int get_imask()
 }
 extern __inline__ void set_vbr(void *vbr)
 {
-	asm("mov %0, r2"::"r"(vbr):"r1");
+	asm("mov %0, r2"::"r"(vbr):"r2");
 	asm("ldc r2,vbr");
 }
 extern __inline__ void* get_vbr(void)
