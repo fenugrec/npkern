@@ -233,6 +233,7 @@ static void init_wdt(void) {
 // internal WDT:  used for 350nm reflash, and for forcing a reset in die(). 
 #define WDT_RSTCSR_SETTING 0x5A5F;	//power-on reset if TCNT overflows
 
+extern u32 endpayload;	//set at linkage
 
 /*
  * Some ECUs (VC264) don't seem to reset properly with just the external WDT.
@@ -242,6 +243,15 @@ static void init_wdt(void) {
  */
 void die(void) {
 	set_imask(0x0F);
+
+	// Clear RAM, from end of kernel to end of RAM.
+	// memset is ~ 90 bytes because it makes no assumptions on alignment. We should be able to do better
+	u32 *mclear = (u32 *)((u32) &endpayload & ~0x03);
+	for (; (u32) mclear <= (RAM_MAX & ~0x03); mclear++) {
+		*mclear = 0;
+	}
+	//memset((void *) endpayload, 0, ((RAM_MAX + 1) - (u32) endpayload)/4);
+
 	set_vbr(0);
 	trapa(0x3F);
 	//unreachable
