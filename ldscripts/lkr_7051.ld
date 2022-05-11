@@ -94,6 +94,7 @@ SECTIONS
 		_idatalen = . - _sdata;
 	} >TGT
 
+ASSERT(_sdata == _edata, "unhandled initialized data !")
 
 	/* Uninitialized data section */
 	. = ALIGN(4);
