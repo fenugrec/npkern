@@ -44,10 +44,12 @@ add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/version.h"
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gitversion.cmake
 )
 
-set (COMMON_SRCS cmd_parser.c eep_funcs.c main.c crc.c start_705x.s
+set (COMMON_SRCS cmd_parser.c eep_funcs.c main.c crc.c
 	${CMAKE_CURRENT_BINARY_DIR}/version.h
 	)
 
+set (NISSAN_SRCS ${COMMON_SRCS} start_705x.s)
+set (SUBARU_SRCS ${COMMON_SRCS} start_ssm.s)
 
 ## objcopy to produce .bin file
 function(make_bin_file target)
@@ -70,32 +72,41 @@ function(show_object_size target)
 endfunction()
 
 
-#cant really automate the targets because sourcefiles and linkerscripts vary
-
-add_executable(npk_SH7051 ${COMMON_SRCS} platf_7050.c pl_flash_7051.c)
-add_executable(npk_SH7055_35 ${COMMON_SRCS} platf_7055.c pl_flash_7055_350nm.c)
-add_executable(npk_SH7055_18 ${COMMON_SRCS} platf_7055.c pl_flash_705x_180nm.c)
-add_executable(npk_SH7058 ${COMMON_SRCS} platf_7055.c pl_flash_705x_180nm.c)
-
-
-# Currently, only 7051 needs a different linker script
-target_link_options(npk_SH7051 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7051.ld)
-target_link_options(npk_SH7055_35 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7055_7058.ld)
-target_link_options(npk_SH7055_18 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7055_7058.ld)
-target_link_options(npk_SH7058 PRIVATE -T ${CMAKE_SOURCE_DIR}/lkr_7055_7058.ld)
+## add a target
+function(add_kernel brand TGTNAME)
+	message(STATUS ${brand}_${TGTNAME})
+	target_compile_definitions(${brand}_${TGTNAME} PRIVATE PLATF=\"${TGTNAME}\")
+	target_compile_definitions(${brand}_${TGTNAME} PRIVATE ${TGTNAME})
+	target_include_directories(${brand}_${TGTNAME} PUBLIC ${PROJECT_BINARY_DIR})
+	make_bin_file(${brand}_${TGTNAME})
+	show_object_size(${brand}_${TGTNAME})
+endfunction()
 
 
-# list all targets here
+#can't really automate the targets because sourcefiles and linkerscripts vary
+
+add_executable(npk_SH7051 ${NISSAN_SRCS} platf_7050.c pl_flash_7051.c)
+add_executable(npk_SH7055_35 ${NISSAN_SRCS} platf_7055.c pl_flash_7055_350nm.c)
+add_executable(npk_SH7055_18 ${NISSAN_SRCS} platf_7055.c pl_flash_705x_180nm.c)
+add_executable(npk_SH7058 ${NISSAN_SRCS} platf_7055.c pl_flash_705x_180nm.c)
+add_executable(ssmk_SH7058 ${SUBARU_SRCS} platf_7055.c pl_flash_705x_180nm.c)
+
+
+# Select proper linker script
+target_link_options(npk_SH7051 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7051.ld)
+target_link_options(npk_SH7055_35 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7055_7058.ld)
+target_link_options(npk_SH7055_18 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7055_7058.ld)
+target_link_options(npk_SH7058 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7055_7058.ld)
+target_link_options(ssmk_SH7058 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_subaru_7058.ld)
+
+
+## Add all Nissan targets here
 set(TGT_LIST "SH7051" "SH7055_35" "SH7055_18" "SH7058")
 
-
-## common operations for all targets
-
 foreach (TGTNAME IN LISTS TGT_LIST)
-	message(STATUS ${TGTNAME})
-	target_compile_definitions(npk_${TGTNAME} PRIVATE PLATF=\"${TGTNAME}\")
-	target_compile_definitions(npk_${TGTNAME} PRIVATE ${TGTNAME})
-	target_include_directories(npk_${TGTNAME} PUBLIC ${PROJECT_BINARY_DIR})
-	make_bin_file(npk_${TGTNAME})
-	show_object_size(npk_${TGTNAME})
+	add_kernel(npk ${TGTNAME})
 endforeach()
+
+## Add Subaru kernel target
+
+add_kernel(ssmk SH7058)
