@@ -105,6 +105,7 @@ ASSERT(_sdata == _edata, "unhandled initialized data !")
 		. = ALIGN(4);
 		_ebss = .;         /* define a global symbol at bss end */
 		_bsslen = . - _sbss;
+		_endpayload = .;
 	} >TGT
 
 
