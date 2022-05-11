@@ -27,7 +27,7 @@ set(OPT_FLAGS "-Os -ffunction-sections")
 
 # removed -pedantic from cflags because we have conversions from u32 to function-pointers which are "problematic"
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CPU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wformat -std=gnu11 \
-				-Wstrict-prototypes -Wsign-compare -Wredundant-decls" )
+				-Wstrict-prototypes -Wsign-compare -Wredundant-decls -ffreestanding" )
 set(ASM_OPTIONS "-x assembler-with-cpp")
 set(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
