@@ -25,7 +25,6 @@
 	.section .rja
 	.global RAMjump_entry
 
-	.extern _rja_start
 	.extern _main	!user code
 	.extern _ebss
 	.extern _bss

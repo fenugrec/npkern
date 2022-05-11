@@ -1,7 +1,7 @@
 /*
 *****************************************************************************
 **
-** Linker script for SH7058 and SH7055 kernels, running from RAM.
+** Linker script for Subaru SH7058 kernel, running from RAM.
 **	- no heap
 **	- stack at end of RAM
 **
@@ -21,7 +21,7 @@ LOADADDR(section) returns the LMA of <section>
 *****************************************************************************
 */
 
-/* (c) copyright fenugrec 2016
+/* (c) copyright fenugrec 2022
  * GPLv3
  * 
  * This program is free software: you can redistribute it and/or modify
@@ -43,9 +43,9 @@ LOADADDR(section) returns the LMA of <section>
 /* Entry Point */
 ENTRY(RAMjump_entry)
 
-/* Memory areas, areas common to 7055 and 7058 */
+/* Memory areas */
 MEMORY {
-	RAM (xw)	: ORIGIN = 0xFFFF6000, LENGTH = 24K
+	RAM (xw)	: ORIGIN = 0xFFFF3004, LENGTH = 24K
 
 }
 REGION_ALIAS("TGT", RAM);
@@ -59,9 +59,8 @@ SECTIONS
 	/* program code and other data */
 	.text :
 	{
-		_rja_start = .;	/* where the whole payload must be moved */
 		. = ALIGN(4);
-		*(.rja)
+		*(.rja)	/* target of the RAMjump. Execution starts here */
 		*(.text)           /* .text sections (code) */
 		*(.text*)          /* .text* sections (code) */
 
