@@ -32,7 +32,8 @@
 
 RAMjump_entry:
 	.BALIGN 2
-
+	nop
+	nop
 
 zero_bss:
 	mov.l ebss, r1
