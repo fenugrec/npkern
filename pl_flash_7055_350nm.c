@@ -341,8 +341,6 @@ uint32_t platf_flash_eb(unsigned blockno) {
 /** Copy 128-byte chunk + apply write pulse for tsp=10/30/200us as specified
  */
 static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
-//	int prev_imask = get_imask();
-//	set_imask(0x0F);
 	unsigned uim;
 	u32 cur;
 
@@ -366,7 +364,6 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 	waitn(TCPSU);
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 
-//	set_imask(prev_imask);
 	imask_restore(uim);
 }
 

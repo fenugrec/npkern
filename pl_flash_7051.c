@@ -344,7 +344,6 @@ static void writepulse(volatile u8 *dest, u8 *src, unsigned tsp) {
 	waitn(TCPSU);
 	WDT.WRITE.TCSR = WDT_TCSR_STOP;
 
-//	set_imask(prev_imask);
 	imask_restore(uim);
 }
 

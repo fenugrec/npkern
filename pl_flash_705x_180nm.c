@@ -21,6 +21,7 @@
 
 
 #include "functions.h"
+#include "extra_functions.h"
 
 #include <string.h>	//memcmp
 #include "stypes.h"
@@ -148,7 +149,7 @@ static bool reflash_enabled = 0;	//global flag to protect flash, see platf_flash
 bool platf_flash_init(u8 *err) {
 	volatile u8 *DPFR;
 	uint32_t FPFR;
-	int imask_save;
+	unsigned imask_save;
 	void *vbr_save;
 
 	reflash_enabled = 0;
@@ -180,9 +181,8 @@ bool platf_flash_init(u8 *err) {
 	FLASH.FECS.BYTE = 1;	//select Erase microcode
 	FLASH.FTDAR.BYTE = FTDAR_ERASE;
 
-	imask_save = get_imask();
+	imask_save = imask_savedisable();
 	vbr_save = get_vbr();
-	set_imask(0x0F);
 	set_vbr(0);	/* Copying takes about 75us per microcode, so no problem for WDT disruption */
 
 	FLASH.FKEY = 0xA5;
@@ -253,7 +253,7 @@ bool platf_flash_init(u8 *err) {
 
 	/***** Restore ints + VBR ****/
 	set_vbr(vbr_save);
-	set_imask(imask_save);
+	imask_restore(imask_save);
 	FLASH.FKEY = 0;
 
 
@@ -274,7 +274,7 @@ bool platf_flash_init(u8 *err) {
 
 badexit:
 	set_vbr(vbr_save);
-	set_imask(imask_save);
+	imask_restore(imask_save);
 	return 0;
 }
 

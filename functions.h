@@ -1,29 +1,40 @@
-/* Source : KPIT GNU SH distribution
+/* Source : KPIT GNU SH distribution, with modifications fenugrec 2016-2022
  * WARNING !!
- * original implementation has buggy implementations for set_imask() and possibly others,
+ * original implementation had buggy implementations for set_imask() and others,
  * where the inline asm was missing some registers in the clobberlist.
- */
-/* reordered, and declarations filtered with ifdefs to reduce warnings,
+ *
+ * Reordered, and declarations filtered with ifdefs to reduce warnings,
  * Added missing implementations:
 	sleep
 	gbr_write_byte
 	gbr_write_long
 	gbr_read_word
 	gbr_read_long
+ *
+ * Writing inline asm blocks is tricky.
+ *
+ * Note re "asm volatile" : "
+		GCC’s optimizers sometimes discard asm statements if they determine there is no need for the output variables. Also, the optimizers may move code out of loops if they believe that the code will always return the same result. [...] Using the volatile qualifier disables these optimizations. "
+ *
+ *
  */
 
-#define trapa(trap_no)	asm ("trapa  %0"::"g"(trap_no))
-#define gbr_and_byte(offset,mask) {asm("mov %0, r0"::"r"(offset):"r0");asm("and.b %0, @(r0,gbr)"::"g"(mask));}
+#define trapa(trap_no)	asm ("trapa  %0"::"i"(trap_no))
 
 
 #define FUNCS_DECL static inline
-FUNCS_DECL void set_cr(int cr) __attribute__ ((always_inline));
-FUNCS_DECL int get_cr(void) __attribute__ ((always_inline));
 FUNCS_DECL void set_imask(unsigned long mask) __attribute__ ((always_inline));
 FUNCS_DECL int get_imask(void) __attribute__ ((always_inline));
 FUNCS_DECL void set_vbr(void *base) __attribute__ ((always_inline));
 FUNCS_DECL void *get_vbr(void) __attribute__ ((always_inline));
 
+FUNCS_DECL void nop(void) __attribute__ ((always_inline));
+
+#if BROKEN_ASM
+// see other BROKEN_ASM block later in file
+
+FUNCS_DECL void set_cr(int cr) __attribute__ ((always_inline));
+FUNCS_DECL int get_cr(void) __attribute__ ((always_inline));
 
 FUNCS_DECL void *get_gbr(void) __attribute__ ((always_inline));
 FUNCS_DECL void set_gbr(void *base) __attribute__ ((always_inline));
@@ -50,7 +61,7 @@ FUNCS_DECL void prefetch (void *p) __attribute__ ((always_inline));
 FUNCS_DECL void ldtlb(void) __attribute__ ((always_inline));
 #endif
 
-FUNCS_DECL void nop(void) __attribute__ ((always_inline));
+
 
 #ifndef __SH1__
 FUNCS_DECL unsigned long dmuls_l(long data1, long data2) __attribute__ ((always_inline));
@@ -92,6 +103,90 @@ FUNCS_DECL void * get_tbr(void) __attribute__ ((always_inline));
 FUNCS_DECL void stbank(long data, int rn, int bn) __attribute__ ((always_inline));
 FUNCS_DECL long ldbank(int rn, int bn) __attribute__ ((always_inline));
 #endif
+#endif
+
+extern __inline__ void nop(void)
+{
+	asm volatile ("nop");
+}
+
+
+/** get current stack pointer (r15) */
+FUNCS_DECL int get_sp(void)__attribute__ ((always_inline));
+extern __inline__ int get_sp(void)
+{
+	long val;
+	asm("mov r15, %0":"=r"(val));
+	return val;
+}
+
+extern __inline__ void set_imask(unsigned long mask)
+{
+	mask <<= 4;
+	mask &= 0xf0;
+
+	asm volatile (
+		"stc   sr,r0\n"
+		"mov   #0xff,r3\n"
+		"shll8 r3\n"
+		"add   #0x0f,r3\n"
+		"and   r3,r0\n"
+		"or    %0,r0\n"
+		"ldc   r0,sr"
+			:
+			:"r" (mask)
+			:"r0","r3"
+	);
+
+}
+
+extern __inline__ int get_imask()
+{
+	volatile int val;
+	asm volatile (
+		"stc         sr,r0\n"
+		"shlr2       r0\n"
+		"shlr2       r0\n"
+		"and         #15,r0\n"
+		"mov r0,%0"
+			:"=r"(val)
+			:
+			:"r0"
+	);
+	return val;
+}
+extern __inline__ void set_vbr(void *vbr)
+{
+	asm volatile (
+		"mov %0, r2\n"
+		"ldc r2,vbr"
+			:
+			:"r"(vbr)
+			:"r2"
+	);
+}
+extern __inline__ void* get_vbr(void)
+{
+	void *ptr;
+	asm inline (
+		"stc vbr,r2\n"
+		"mov.l r2, %0"
+			:"=m"(ptr)
+			:
+			:"r2"
+	);
+	return ptr;
+}
+
+
+
+#if BROKEN_ASM
+/* these need to be double-checked for :
+ * - clobber lists
+ * - written as single asm volatile (...) blocks
+*/
+
+#define gbr_and_byte(offset,mask) {asm("mov %0, r0"::"r"(offset):"r0");asm("and.b %0, @(r0,gbr)"::"g"(mask));}
 
 
 extern __inline__ void set_cr(int cr)
@@ -109,57 +204,6 @@ extern __inline__ int get_cr(void)
 	return val;
 }
 
-/** get current stack pointer (r15) */
-FUNCS_DECL int get_sp(void)__attribute__ ((always_inline));
-extern __inline__ int get_sp(void)
-{
-	long val;
-	asm("mov r15, %0":"=r"(val));
-	return val;
-}
-
-extern __inline__ void set_imask(unsigned long mask)
-{
-//	asm ("mov.l r0,@-r15"); // Push POP not required from GNUSH V12.01 onwards
-	mask <<= 4;
-	mask &= 0xf0;
-
-	asm("stc   sr,r0":::"r0");
-	asm("mov   #0xff,r3":::"r3");
-	asm("shll8 r3");
-	asm("add   #0x0f,r3");
-	asm("and   r3,r0");
-	asm("mov   %0,r3"::"r" (mask));
-	asm("or    r3,r0");
-	asm("ldc   r0,sr");
-//	asm("mov.l @r15+,r0");
-
-}
-
-extern __inline__ int get_imask()
-{
-	volatile int val;
-//	asm ("mov.l r0,@-r15");  // Push POP not required from GNUSH V12.01 onwards
-	asm("stc         sr,r0");
-	asm("shlr2       r0");
-	asm("shlr2       r0");
-	asm("and         #15,r0");
-	asm volatile ("mov r0,%0":"=r"(val)::"r0");
-//	asm("mov.l @r15+,r0");
-	return val;
-}
-extern __inline__ void set_vbr(void *vbr)
-{
-	asm("mov %0, r2"::"r"(vbr):"r2");
-	asm("ldc r2,vbr");
-}
-extern __inline__ void* get_vbr(void)
-{
-	void *ptr;
-	asm("stc vbr,r2":::"r2");
-	asm("mov.l r2, %0":"=m"(ptr));
-	return ptr;
-}
 extern __inline__ void set_gbr(void *gbr)
 {
 	asm("mov %0, r2"::"r"(gbr):"r2");
@@ -257,11 +301,6 @@ extern __inline__ void ldtlb(void)
 	asm("ldtlb");
 }
 #endif
-
-extern __inline__ void nop(void)
-{
-	asm("nop");
-}
 
 #ifndef __SH1__
 extern __inline__ unsigned long dmuls_l(long data1, long data2)
@@ -904,4 +943,5 @@ extern __inline__ long ldbank(int rn, int bn)
 	return result;
 }
 
+#endif
 #endif
