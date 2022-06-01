@@ -126,16 +126,14 @@ extern __inline__ void set_imask(unsigned long mask)
 	mask &= 0xf0;
 
 	asm volatile (
-		"stc   sr,r0\n"
-		"mov   #0xff,r3\n"
-		"shll8 r3\n"
-		"add   #0x0f,r3\n"
-		"and   r3,r0\n"
-		"or    %0,r0\n"
-		"ldc   r0,sr"
+		"stc	sr, r0 \n"
+		"or	#0xF0, r0 \n"	// set IIII=b'1111
+		"xor	#0xF0, r0 \n"	// equiv. to "R0 = (SR & 0xFFFF FF0F)"
+		"or	%0,r0\n"
+		"ldc	r0,sr"
 			:
 			:"r" (mask)
-			:"r0","r3"
+			:"r0"
 	);
 
 }
