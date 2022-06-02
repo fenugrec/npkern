@@ -166,7 +166,7 @@ extern __inline__ void set_vbr(void *vbr)
 extern __inline__ void* get_vbr(void)
 {
 	void *ptr;
-	asm inline (
+	asm volatile (
 		"stc vbr,r2\n"
 		"mov.l r2, %0"
 			:"=m"(ptr)
