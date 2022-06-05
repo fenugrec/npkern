@@ -45,7 +45,7 @@ ENTRY(RAMjump_entry)
 
 /* Memory areas */
 MEMORY {
-	RAM (xw)	: ORIGIN = 0xFFFF3000, LENGTH = 24K
+	RAM (xw)	: ORIGIN = 0xFFFF3000, LENGTH = 36K
 
 }
 REGION_ALIAS("TGT", RAM);
