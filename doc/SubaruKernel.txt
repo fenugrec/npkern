@@ -1,0 +1,9 @@
+Notes on kernels for 2005 era SH7058 Subaru
+- the kernel needs to be loaded using SID commands (see SubaruSIDs.txt in nisprog)
+- Subaru ECUs have a watchdog outside the SH7058 that expects to see PortB pin15 (PB15) toggling every 6.6ms
+- the kernel needs to toggle PB15 approximately every 6.6ms or the external watchdog will reset the ECU
+- Subaru SH7058's have the FWE (Flash Write Enable) pin connected to PortD pin8 (PD8).
+- the kernel needs to bring PD8 high to enable erasing or writing to the ROM
+- Subaru ECUs also have the User Break Controller (UBC) set to trigger an interrput if writing to a ROM address is requested
+- the kernel needs to turn off the UBC interrupt
+- in addition to the above, the erasing / writing procedure from the Renesas SH7058 datasheet needs to be followed exactly
