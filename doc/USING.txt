@@ -8,6 +8,8 @@ Use at your own risk, and have fun !
 
 TODO : write protocol description somewhere else ?
 
+(see Subaru specific comments in the SUBARU section below)
+
 The kernel implements a type of iso14230-compliant communications, without requiring the delicate "fast init" wake-up pattern.
 In other words, communications are established with a simple "StartCommunications" request.
 
@@ -102,5 +104,99 @@ manually (TODO : purge automatically / describe how?). I open realterm and send 
 ***** All done ? reset the ECU !
 	stopkernel
 	npdisc
+	
+	
+***** SUBARU section
+- all the same warnings as above apply
+- whilst nisprog was initially written for Nissan, it now has some additional commands for communicating with and flashing Subaru ECUs
+- only Subaru ECUs based on SH7058 (that don't use CAN communications) are currently supported
+
+Software Setup
+- all files can be downloaded from github: https://github.com/rimwall
+- nisprog and npkern can be compiled from the github files, or the following minimum files are required for Subaru comms/flashing
+	* nisprog.exe
+	* nisprog.ini
+	* ssmk_SH7058.bin
+- put these files all in the same directory along with the binary ROM file for flashing (eg) newROM.bin
+- newROM.bin needs to have Checksums corrected for any changes. If you use Romraider Editor this will be done automatically.
+
+Hardware Setup
+- a windows PC or laptop plugged in to power (if the laptop battery dies during a flash, the ECU may be bricked)
+- any simple serial USB to OBD-II cable. Cheap ebay VAG-COM cables should be fine. Install the windows drivers that came with the cable.
+- plug the cable into a USB port and make sure it is detected and working in Device Manager. Note the COMx number that the cable has connected to.
+- plug the cable into the OBD-II port on your vehicle
+- have a battery charger running on your car battery to ensure voltage doesn't drop too low (if this occurs, the ECU may be bricked)
+- turn the key in the ignition to 'ON' but do not start the car
+
+Initial setup
+- edit nisprog.ini to have the correct COMx number (from above):
+	port \\.\COM1
+- for Subaru, nisprog initially uses a RAW connection, and then switches to ISO14230. Therefore, the settings required in nisprog.ini are:
+	l2protocol RAW
+	initmode fast
+	testerid 0xf0
+	destaddr 0x10
+	addrtype phys
+	speed 4800
+
+Running nisprog
+- nisprog interacts with a command line interface
+- start a Command Shell in Windows (press Windows+R keys and type "cmd")
+- move to the directory in which you stored nisprog.exe (eg: type "cd\nisprog")
+- run nisprog (type "nisprog")
+
+Connecting & SSM commands
+- type "spconn" to connect to the Subaru ECU
+- if connection is successful, the ECU ID number will be reported
+- once connected, nisprog command "diag sr" can be used to interact with the ECU using the SSM protocol (see: https://romraider.com/index.php/RomRaider/SsmProtocol)
+- only the command/response data needs to be entered (nisprog completes the header and checksum)
+- for example, to issue an "ECU Init" request, type "diag sr 0xBF"
+- another example, to read 8 bytes at 0xFFFF6000 type "diag sr 0xA0 0x00 0xFF 0x60 0x00 0x08"
+
+Running the kernel
+- type "sprunkernel ssmk_SH7058.bin"
+- if loading of the kernel is successful, the kernel ID number will be reported
+- the ECU is now running from the kernel program in RAM and is no longer running from the ROM
+
+Test kernel operation / dumping a ROM
+- dumping a ROM is a good test to ensure stable operation
+- type "dm TestDump.bin 0 1024576"
+- this will take 3-4 minutes to dump the 1MB ROM into TestDump.bin
+- review the file to ensure a successful dump
+
+Flashing a block (practice mode)
+- type "flblock <completeROMfile.bin> <block_number>"
+- completeROMfile.bin will be the newROM.bin file (see above)
+- blocknumber is the Erase Block (EBxx in the datasheet) that you want to change
+- for example, type "flblock newROM.bin 13"
+- note: verification will fail because the ROM isn't changed in practice mode
+- if finished go to Exit Process below
+
+Flashing a block (for real)
+- same as above but type "flblock <completeROMfile.bin> <block_number> Y"
+- for example, type "flblock newROM.bin 13 Y"
+- if finished, go to Exit Process below
+
+Flashing a whole ROM (practice or for real)
+- type "flrom newROM.bin"
+- enter "p" for practice mode or "y" for real mode
+- nisprog will give you the choice to flash all blocks, or only the changed blocks
+
+Exit Process
+- if the kernel is running, type "stopkernel" to stop the kernel and restart the ECU
+- all learned values in the RAM will be reset as part of this process
+- if the kernel isn't running, type "npdisc" to disconnect from the ECU
+- type "exit" to exit from nisprog and return to the command line
+
+Troubleshooting
+- you are mainly on your own
+- see comments above in the Nissan section
+- help may be availabe on the Romraider forums
+
+
+
+
+
+
  
  
