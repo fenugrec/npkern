@@ -31,12 +31,18 @@
 
 /*********  Reflashing defines
  *
- * These are for SH7058 and SH7055 (0.18um), and assume this RAM map :
+ * These are for SH7058 and SH7055 (0.18um), and assume a RAM map with
+ * a stack @ 0xFFFF BFFC (growing downwards), as well as:
  *
- * - stack @ 0xFFFF BFFC (growing downwards)
- * - kernel @ 0xFFFF 8100, this leaves ~16k for both kernel + stack
- * and according to mcu type:
- * - mcu's built-in erase and write programs copied @ 0xFFFF1000 or 0xFFFF7000
+ **** on 7058 ****
+ * - 2x 4kB for builtin "microcodes" at 0xFFFF1000-2FFF
+ * - on Subaru : kernel @ 0xFFFF3000
+ * - on Nissan : kernel @ 0xFFFF8100, this leaves ~16k for both kernel + stack
+
+ **** on 7055 ****
+ * - 2x 2kB for builtin "microcodes" at 0xFFFF6000-6FFF
+ * - on Subaru : TODO
+ * - on Nissan : kernel @ 0xFFFF8100, this leaves ~16k for both kernel + stack
  */
 
 
