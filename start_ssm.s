@@ -32,6 +32,7 @@
 
 RAMjump_entry:
 	.BALIGN 2
+! these end up at ffff3000, in case ramjump lands here instead of ffff3004
 	nop
 	nop
 
