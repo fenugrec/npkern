@@ -90,7 +90,7 @@
  *
  * sets *err to a negative response code if failed
  */
-bool platf_flash_init(u8 *err);
+bool platf_flash_init(uint8_t *err);
 
 
 /** Enable modification (erase/write) to flash.
