@@ -44,12 +44,12 @@ add_custom_target(version_h BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/version.h"
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gitversion.cmake
 )
 
-set (COMMON_SRCS cmd_parser.c eep_funcs.c main.c crc.c
+set (COMMON_SRCS cmd_parser.c eep_funcs.c main.c crc.c wdt.c
 	${CMAKE_CURRENT_BINARY_DIR}/version.h
 	)
 
-set (NISSAN_SRCS ${COMMON_SRCS} start_705x.s)
-set (SUBARU_SRCS ${COMMON_SRCS} start_ssm.s)
+set (NISSAN_SRCS ${COMMON_SRCS} mfg_nissan.c start_705x.s)
+set (SUBARU_SRCS ${COMMON_SRCS} mfg_ssm.c start_ssm.s)
 
 ## objcopy to produce .bin file
 function(make_bin_file target)
@@ -77,6 +77,7 @@ function(add_kernel brand TGTNAME)
 	message(STATUS ${brand}_${TGTNAME})
 	target_compile_definitions(${brand}_${TGTNAME} PRIVATE PLATF=\"${TGTNAME}\")
 	target_compile_definitions(${brand}_${TGTNAME} PRIVATE ${TGTNAME})
+	target_compile_definitions(${brand}_${TGTNAME} PRIVATE ${brand})
 	target_include_directories(${brand}_${TGTNAME} PUBLIC ${PROJECT_BINARY_DIR})
 	make_bin_file(${brand}_${TGTNAME})
 	show_object_size(${brand}_${TGTNAME})

@@ -25,46 +25,57 @@
 
 #include <stdbool.h>
 
-/****** mcu-specific defines ******/
-/*
- * RAMJUMP_PRELOAD_META : where the pre-ramjump metadata is stored (wdt pin, s36k2, etc)
- * RAM_MIN, RAM_MAX : whole RAM area
- * " #include "reg_defines/????" : i/o peripheral registers
- */
+/****** mfg- and mcu-specific defines ******
+*
+* RAM_MIN, RAM_MAX : whole RAM area
+* " #include "reg_defines/????" : i/o peripheral registers
+*/
 
+#if defined(npk)
 
-#if defined(SH7058)
-	#include "reg_defines/7055_7058_180nm.h"
-	#define RAM_MIN	0xFFFF0000
-	#define RAM_MAX 	0xFFFFBFFF
-	#define RAMJUMP_PRELOAD_META 0xffff8000
-	#define NPK_SCI SCI1
+/* Nissan only: RAMJUMP_PRELOAD_META : pre-ramjump metadata address */
+	#if defined(SH7058)
+		#include "reg_defines/7055_7058_180nm.h"
+		#define RAM_MIN	0xFFFF0000
+		#define RAM_MAX 	0xFFFFBFFF
+		#define RAMJUMP_PRELOAD_META 0xffff8000
+		#define NPK_SCI SCI1
 
-#elif defined(SH7055_18)
-	#include "reg_defines/7055_7058_180nm.h"
-	#define RAM_MIN	0xFFFF6000
-	#define RAM_MAX	0xFFFFDFFF
-	#define RAMJUMP_PRELOAD_META 0xffff8000
-	#define NPK_SCI SCI1
+	#elif defined(SH7055_18)
+		#include "reg_defines/7055_7058_180nm.h"
+		#define RAM_MIN	0xFFFF6000
+		#define RAM_MAX	0xFFFFDFFF
+		#define RAMJUMP_PRELOAD_META 0xffff8000
+		#define NPK_SCI SCI1
 
-#elif defined(SH7055_35)
-	#include "reg_defines/7055_350nm.h"
-	#define RAM_MIN	0xFFFF6000
-	#define RAM_MAX	0xFFFFDFFF
-	#define RAMJUMP_PRELOAD_META 0xffff8000
-	#define NPK_SCI SCI1
+	#elif defined(SH7055_35)
+		#include "reg_defines/7055_350nm.h"
+		#define RAM_MIN	0xFFFF6000
+		#define RAM_MAX	0xFFFFDFFF
+		#define RAMJUMP_PRELOAD_META 0xffff8000
+		#define NPK_SCI SCI1
 
-#elif defined(SH7051)
-	#include "reg_defines/7051.h"
-	#define RAM_MIN	0xFFFFD800
-	#define RAM_MAX	0xFFFFFFFF
-	#define RAMJUMP_PRELOAD_META 0xffffD800
-	#define NPK_SCI SCI2
+	#elif defined(SH7051)
+		#include "reg_defines/7051.h"
+		#define RAM_MIN	0xFFFFD800
+		#define RAM_MAX	0xFFFFFFFF
+		#define RAMJUMP_PRELOAD_META 0xffffD800
+		#define NPK_SCI SCI2
 
-#else
-	#error No target specified !
+	#else
+		#error No target specified !
+	#endif
+
+#elif defined(ssmk)
+	#if defined(SH7058)
+		#include "reg_defines/7055_7058_180nm.h"
+		#define RAM_MIN	0xFFFF0000
+		#define RAM_MAX 	0xFFFFBFFF
+		#define NPK_SCI SCI2
+	#else
+		#error invalid target for ssmk
+	#endif
 #endif
-
 
 
 /*** WDT and master clock stuff
@@ -117,12 +128,10 @@ uint32_t platf_flash_wb(uint32_t dest, uint32_t src, uint32_t len);
 /***** Init funcs ****/
 
 
-/** init platform-specific stuff : SCI, clocks, interrupts */
+/** init platform-specific stuff : SCI, clocks, interrupts, WDT etc */
 void init_platf(void);
 
-/** init necessary timers & shit for WDT interrupt !
- */
-void init_wdt(void);
+
 
 /** force reset by external supervisor and/or internal WDT.
  */

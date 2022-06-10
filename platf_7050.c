@@ -29,6 +29,7 @@
 
 #include "stypes.h"
 #include "platf.h"
+#include "wdt.h"
 
 /* init SCI to continue comms on K line */
 static void init_sci(void) {
@@ -39,7 +40,7 @@ static void init_sci(void) {
 
 
 /******* Interrupt stuff */
-void wdt_tog(void);
+static void init_wdt(void);
 
 /** WDT toggle interrupt
  *
@@ -189,7 +190,7 @@ void init_platf(void) {
 
 	init_mclk();
 	init_sci();
-
+	init_wdt();
 }
 
 

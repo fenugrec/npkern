@@ -5,7 +5,7 @@
  * - external WDT
  */
 
-/* (c) copyright fenugrec 2016
+/* (c) copyright fenugrec 2016-2022
  * GPLv3
  *
  * This program is free software: you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 
 #include "stypes.h"
 #include "platf.h"
+#include "wdt.h"
 
 /* init SCI to continue comms on K line */
 static void init_sci(void) {
@@ -39,7 +40,7 @@ static void init_sci(void) {
 
 
 /******* Interrupt stuff */
-void wdt_tog(void);
+static void init_wdt(void);
 
 /** WDT toggle interrupt
  *
@@ -49,9 +50,7 @@ void INT_ATU11_IMI1A(void) ISR_attrib;
 void INT_ATU11_IMI1A(void) {
 
 	wdt_tog();
-	//ATU1.TCNTA = 0;
 	ATU1.TCNTB = 0;
-	//ATU1.TSRA.BIT.IMFA = 0 ;
 	ATU1.TSRB.BIT.CMF = 0;	//TCNT1B compare match
 	return;
 }
@@ -200,7 +199,7 @@ void init_platf(void) {
 
 	init_mclk();
 	init_sci();
-
+	init_wdt();
 }
 
 
@@ -209,7 +208,7 @@ void init_platf(void) {
  * since host was taking care of it just before.
  * This uses Channel 1 TCNTB CMF interrupt
  */
-void init_wdt(void) {
+static void init_wdt(void) {
 	ATU.TSTR1.BIT.STR12B = 0;	//stop while configging
 	ATU1.TIORA.BYTE = 0;
 	ATU1.TIORB.BYTE = 0;
@@ -230,7 +229,10 @@ void init_wdt(void) {
 	return;
 }
 
+
+// internal WDT:  used for 350nm reflash, and for forcing a reset in die(). 
 #define WDT_RSTCSR_SETTING 0x5A5F;	//power-on reset if TCNT overflows
+
 
 /*
  * Some ECUs (VC264) don't seem to reset properly with just the external WDT.
