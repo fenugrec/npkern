@@ -153,6 +153,7 @@ static void init_ints(void) {
 	INTC.IPRJ.WORD = 0;
 	INTC.IPRK.WORD = 0;
 	INTC.IPRL.WORD = 0;
+	UBC.UBCR.BIT.UBID = 1;	//disable UBC
 	set_vbr((void *) ivt);
 	return;
 }
