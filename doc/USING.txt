@@ -155,27 +155,17 @@ Connecting & SSM commands
 
 Running the kernel
 - type "sprunkernel ssmk_SH7058.bin"
-- if loading of the kernel is successful, the kernel ID number will be reported
+- if loading of the kernel is successful, the kernel build ID will be reported
 - the ECU is now running from the kernel program in RAM and is no longer running from the ROM
+
+Set 7055 or 7058
+- type "setdev 7058" or "setdev 7055" to tell nisprog which ROM you have
 
 Test kernel operation / dumping a ROM
 - dumping a ROM is a good test to ensure stable operation
-- type "dm TestDump.bin 0 1024576"
-- this will take 3-4 minutes to dump the 1MB ROM into TestDump.bin
+- type "dm TestDump.bin 0 0"
+- this will take 3-4 minutes to dump the ROM into TestDump.bin. It wil auto-detect ROM size based on "setdev" command.
 - review the file to ensure a successful dump
-
-Flashing a block (practice mode)
-- type "flblock <completeROMfile.bin> <block_number>"
-- completeROMfile.bin will be the newROM.bin file (see above)
-- blocknumber is the Erase Block (EBxx in the datasheet) that you want to change
-- for example, type "flblock newROM.bin 13"
-- note: verification will fail because the ROM isn't changed in practice mode
-- if finished go to Exit Process below
-
-Flashing a block (for real)
-- same as above but type "flblock <completeROMfile.bin> <block_number> Y"
-- for example, type "flblock newROM.bin 13 Y"
-- if finished, go to Exit Process below
 
 Flashing a whole ROM (practice or for real)
 - type "flrom newROM.bin"
