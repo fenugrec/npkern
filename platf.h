@@ -31,9 +31,22 @@
 * " #include "reg_defines/????" : i/o peripheral registers
 */
 
-#if defined(npk)
+/*** WDT and master clock stuff
+ * want to toggle the WDT every X ms (2ms on Nissan)
+ */
 
+//#define WDT_PER_MS	2
+	/* somehow shc sucks at reducing the following :
+	 * u16 WDT_MAXCNT = WDT_PER_MS / 1000 * (40*1000*1000ULL / 64))
+	 */
+//#define WDT_MAXCNT WDT_PER_MS * 40*1000*1000UL / 64 / 1000
+
+
+
+#if defined(npk)
+	#define WDT_MAXCNT 1250
 /* Nissan only: RAMJUMP_PRELOAD_META : pre-ramjump metadata address */
+
 	#if defined(SH7058)
 		#include "reg_defines/7055_7058_180nm.h"
 		#define RAM_MIN	0xFFFF0000
@@ -67,6 +80,7 @@
 	#endif
 
 #elif defined(ssmk)
+	#define WDT_MAXCNT 4125 //aim for 6.6ms , although it probably works at 2ms anyway
 	#if defined(SH7058)
 		#include "reg_defines/7055_7058_180nm.h"
 		#define RAM_MIN	0xFFFF0000
@@ -78,16 +92,6 @@
 #endif
 
 
-/*** WDT and master clock stuff
- * want to toggle the WDT every 2ms (or 2000us)
- */
-
-//#define WDT_PER_MS	2
-	/* somehow shc sucks at reducing the following :
-	 * u16 WDT_MAXCNT = WDT_PER_MS / 1000 * (40*1000*1000ULL / 64))
-	 */
-//#define WDT_MAXCNT WDT_PER_MS * 40*1000*1000UL / 64 / 1000
-#define WDT_MAXCNT 1250
 
 #define MCLK_GETMS(x) ((x) * 16 / 10000)	/* convert ticks to milliseconds */
 #define MCLK_GETTS(x) ((x) * 10000 / 16) /* convert millisec to ticks */
