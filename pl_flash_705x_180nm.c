@@ -56,63 +56,72 @@
 // 7058S needs 3kB for each microcode (vs 2k for 7055_18 / 7058).
 // leaving one 2k chunk empty between ERASE and WRITE does no harm
 // on 7058.
-#define FTDAR_ERASE 0x02
-#define FTDAR_WRITE 0x04
-#define FL_ERASE_BASE	0xFFFF1000
-#define FL_WRITE_BASE	0xFFFF2000
+	#define FTDAR_ERASE 0x02
+	#define FTDAR_WRITE 0x04
+	#define FL_ERASE_BASE	0xFFFF1000
+	#define FL_WRITE_BASE	0xFFFF2000
 
-#define FL_MAXROM	(1024*1024UL - 1UL)
+	#define FL_MAXROM	(1024*1024UL - 1UL)
 
-const u32 fblocks[] = {
-	0x00000000,
-	0x00001000,
-	0x00002000,
-	0x00003000,
-	0x00004000,
-	0x00005000,
-	0x00006000,
-	0x00007000,
-	0x00008000,
-	0x00020000,
-	0x00040000,
-	0x00060000,
-	0x00080000,
-	0x000A0000,
-	0x000C0000,
-	0x000E0000,
-	0x00100000,	/* end delimiter */
-};
+	const u32 fblocks[] = {
+		0x00000000,
+		0x00001000,
+		0x00002000,
+		0x00003000,
+		0x00004000,
+		0x00005000,
+		0x00006000,
+		0x00007000,
+		0x00008000,
+		0x00020000,
+		0x00040000,
+		0x00060000,
+		0x00080000,
+		0x000A0000,
+		0x000C0000,
+		0x000E0000,
+		0x00100000,	/* end delimiter */
+	};
 
 #elif defined(SH7055_18)
-#define FTDAR_ERASE 0x00
-#define FTDAR_WRITE 0x01
-#define FL_ERASE_BASE	0xFFFF6000
-#define FL_WRITE_BASE	0xFFFF6800
+	#if defined(npk)
+		#define FTDAR_ERASE 0x00
+		#define FTDAR_WRITE 0x01
+		#define FL_ERASE_BASE	0xFFFF6000
+		#define FL_WRITE_BASE	0xFFFF6800
 
-#define FL_MAXROM	(512*1024UL - 1UL)
+	#elif defined(ssmk)
+		#define FTDAR_ERASE 0x04
+		#define FTDAR_WRITE 0x05
+		#define FL_ERASE_BASE	0xFFFF8000
+		#define FL_WRITE_BASE	0xFFFF8800
 
-const u32 fblocks[] = {
-	0x00000000,
-	0x00001000,
-	0x00002000,
-	0x00003000,
-	0x00004000,
-	0x00005000,
-	0x00006000,
-	0x00007000,
-	0x00008000,
-	0x00010000,
-	0x00020000,
-	0x00030000,
-	0x00040000,
-	0x00050000,
-	0x00060000,
-	0x00070000,
-	0x00080000,	/* end delimiter */
-};
+	#endif
+
+	#define FL_MAXROM	(512*1024UL - 1UL)
+
+	const u32 fblocks[] = {
+		0x00000000,
+		0x00001000,
+		0x00002000,
+		0x00003000,
+		0x00004000,
+		0x00005000,
+		0x00006000,
+		0x00007000,
+		0x00008000,
+		0x00010000,
+		0x00020000,
+		0x00030000,
+		0x00040000,
+		0x00050000,
+		0x00060000,
+		0x00070000,
+		0x00080000,	/* end delimiter */
+	};
 
 #else
-#error No target specified !
+	#error No target specified !
 
 #endif
 
