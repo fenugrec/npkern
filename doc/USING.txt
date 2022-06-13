@@ -109,14 +109,15 @@ manually (TODO : purge automatically / describe how?). I open realterm and send 
 ***** SUBARU section
 - all the same warnings as above apply
 - whilst nisprog was initially written for Nissan, it now has some additional commands for communicating with and flashing Subaru ECUs
-- only Subaru ECUs based on SH7058 (that don't use CAN communications) are currently supported
+- only Subaru ECUs based on SH7055S or SH7058 (that don't use CAN communications) are currently supported
+- SH7058 has been bench-tested. SH7055S is yet to be tested (volunteers welcome).
 
 Software Setup
-- all files can be downloaded from github: https://github.com/rimwall
+- all files can be downloaded from github: https://github.com/fenugrec
 - nisprog and npkern can be compiled from the github files, or the following minimum files are required for Subaru comms/flashing
 	* nisprog.exe
-	* nisprog.ini
-	* ssmk_SH7058.bin
+	* ssmprog.ini
+	* ssmk_SH7058.bin or ssmk_SH7055_18.bin
 - put these files all in the same directory along with the binary ROM file for flashing (eg) newROM.bin
 - newROM.bin needs to have Checksums corrected for any changes. If you use Romraider Editor this will be done automatically.
 
@@ -129,9 +130,9 @@ Hardware Setup
 - turn the key in the ignition to 'ON' but do not start the car
 
 Initial setup
-- edit nisprog.ini to have the correct COMx number (from above):
+- edit ssmprog.ini to have the correct COMx number (from above):
 	port \\.\COM1
-- for Subaru, nisprog initially uses a RAW connection, and then switches to ISO14230. Therefore, the settings required in nisprog.ini are:
+- for Subaru, nisprog initially uses a RAW connection, and then switches to ISO14230. Therefore, the settings required in ssmprog.ini are:
 	l2protocol RAW
 	initmode fast
 	testerid 0xf0
@@ -143,7 +144,7 @@ Running nisprog
 - nisprog interacts with a command line interface
 - start a Command Shell in Windows (press Windows+R keys and type "cmd")
 - move to the directory in which you stored nisprog.exe (eg: type "cd\nisprog")
-- run nisprog (type "nisprog")
+- run nisprog with the start commands from ssmprog.ini (type "nisprog -f ssmprog.ini")
 
 Connecting & SSM commands
 - type "spconn" to connect to the Subaru ECU
@@ -153,13 +154,13 @@ Connecting & SSM commands
 - for example, to issue an "ECU Init" request, type "diag sr 0xBF"
 - another example, to read 8 bytes at 0xFFFF6000 type "diag sr 0xA0 0x00 0xFF 0x60 0x00 0x08"
 
-Running the kernel
-- type "sprunkernel ssmk_SH7058.bin"
-- if loading of the kernel is successful, the kernel build ID will be reported
-- the ECU is now running from the kernel program in RAM and is no longer running from the ROM
-
 Set 7055 or 7058
 - type "setdev 7058" or "setdev 7055" to tell nisprog which ROM you have
+
+Running the kernel
+- type "sprunkernel ssmk_SH7058.bin" or "sprunkernel ssmk_SH7055_18.bin"
+- if loading of the kernel is successful, the kernel build ID will be reported
+- the ECU is now running from the kernel program in RAM and is no longer running from the ROM
 
 Test kernel operation / dumping a ROM
 - dumping a ROM is a good test to ensure stable operation
