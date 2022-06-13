@@ -241,23 +241,23 @@ extern u32 endpayload;	//set at linkage
  * which *may* be causing rare issues (spurious ignition on stopkernel !?).
  * Or were those because I previously wasn't setting vbr=0 ?
  */
+
 void die(void) {
 	set_imask(0x0F);
 
 	// Clear RAM, from end of kernel to end of RAM.
 	// memset is ~ 90 bytes because it makes no assumptions on alignment. We should be able to do better
-	u32 *mclear = (u32 *)((u32) &endpayload & ~0x03);
-	for (; (u32) mclear <= (RAM_MAX & ~0x03); mclear++) {
+	u32 numbytes = (u32) &stackinit - (u32) &endpayload;
+	volatile u32 *mclear = &endpayload;
+//	for (; (u32) mclear <= RAM_MAX; mclear++) {
+	for (; numbytes > 0; numbytes -= 4, mclear++) {
 		*mclear = 0;
 	}
-	//memset((void *) endpayload, 0, ((RAM_MAX + 1) - (u32) endpayload)/4);
 
 	set_vbr(0);
 	trapa(0x3F);
-	//unreachable
 //	WDT.WRITE.RSTCSR = WDT_RSTCSR_SETTING;
-//	WDT.WRITE.TCSR = (0xA578 | 0);	// clk div2 for ~ 12us overflow
-	while (1) {}
-	return;
-}
+//	WDT.WRITE.TCSR = (0xA578 | 0);  // clk div2 for ~ 12us overflow
 
+	__builtin_unreachable();
+}
