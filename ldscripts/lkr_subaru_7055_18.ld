@@ -1,7 +1,7 @@
 /*
 *****************************************************************************
 **
-** Linker script for Subaru SH7058 kernel, running from RAM.
+** Linker script for Subaru SH7055 (180nm) kernel, running from RAM.
 **	- no heap
 **	- stack at end of RAM
 **
