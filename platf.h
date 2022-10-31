@@ -48,14 +48,14 @@
 /* Nissan only: RAMJUMP_PRELOAD_META : pre-ramjump metadata address */
 
 	#if defined(SH7058)
-		#include "reg_defines/7055_7058_180nm.h"
+		#include "reg_defines/7058.h"
 		#define RAM_MIN	0xFFFF0000
 		#define RAM_MAX 	0xFFFFBFFF
 		#define RAMJUMP_PRELOAD_META 0xffff8000
 		#define NPK_SCI SCI1
 
 	#elif defined(SH7055_18)
-		#include "reg_defines/7055_7058_180nm.h"
+		#include "reg_defines/7055_180nm.h"
 		#define RAM_MIN	0xFFFF6000
 		#define RAM_MAX	0xFFFFDFFF
 		#define RAMJUMP_PRELOAD_META 0xffff8000
@@ -82,13 +82,13 @@
 #elif defined(ssmk)
 	#define WDT_MAXCNT 4125 //aim for 6.6ms , although it probably works at 2ms anyway
 	#if defined(SH7058)
-		#include "reg_defines/7055_7058_180nm.h"
+		#include "reg_defines/7058.h"
 		#define RAM_MIN	0xFFFF0000
 		#define RAM_MAX 	0xFFFFBFFF
 		#define NPK_SCI SCI2
 
 	#elif defined(SH7055_18)
-		#include "reg_defines/7055_7058_180nm.h"
+		#include "reg_defines/7055_180nm.h"
 		#define RAM_MIN	0xFFFF6000
 		#define RAM_MAX	0xFFFFDFFF
 		#define NPK_SCI SCI2
