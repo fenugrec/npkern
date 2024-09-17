@@ -46,8 +46,8 @@ ENTRY(RAMjump_entry)
 MEMORY {
 	RAM (xw)	: ORIGIN = 0xFFFF8000, LENGTH = 16K
 	RMETA (xr) : ORIGIN = 0xFFFF8000, LENGTH = 64
-	/* skip the metadata block copied there */
-	RJFIX (xw)	: ORIGIN = 0xFFFF8040, LENGTH = 8K
+	/* skip the metadata block copied just before ramjump */
+	RJFIX (xw)	: ORIGIN = ORIGIN(RMETA)+LENGTH(RMETA), LENGTH = 8K
 
 }
 REGION_ALIAS("TGT", RJFIX);

@@ -46,9 +46,9 @@ ENTRY(RAMjump_entry)
 /* Memory areas, areas common to 7055 and 7058 */
 MEMORY {
 	RAM (xw)	: ORIGIN = 0xFFFF6000, LENGTH = 24K
-	RMETA (xr) : ORIGIN = 0xFFFF8000, LENGTH = 64
-	/* skip the area @ FFFF8000 because there's some metadata copied there */
-	RJFIX (xw)	: ORIGIN = 0xFFFF8100, LENGTH = 8K
+	RMETA (xr) : ORIGIN = 0xFFFF8000, LENGTH = 0x40
+	/* skip the metadata block copied just before ramjump */
+	RJFIX (xw)	: ORIGIN = ORIGIN(RMETA)+LENGTH(RMETA), LENGTH = 8K
 
 }
 REGION_ALIAS("TGT", RJFIX);
