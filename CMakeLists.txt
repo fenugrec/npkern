@@ -104,7 +104,12 @@ target_link_options(ssmk_SH7055_18 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_
 
 
 ## Add all Nissan targets here
-set(TGT_LIST "SH7051" "SH7055_35" "SH7055_18" "SH7058")
+set(TGT_LIST
+	"SH7051"
+	"SH7055_35"
+	"SH7055_18"
+	"SH7058"
+)
 
 foreach (TGTNAME IN LISTS TGT_LIST)
 	add_kernel(npk ${TGTNAME})
