@@ -180,13 +180,6 @@ static void init_mclk(void) {
 	return;
 }
 
-#if 0
-uint32_t get_mclk_ts(void) {
-	return ATU0.TCNT;
-}
-#endif
-
-
 
 void init_platf(void) {
 	build_ivt(ivt);
