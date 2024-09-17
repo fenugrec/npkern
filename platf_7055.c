@@ -3,9 +3,12 @@
  * - init
  * - master clock
  * - external WDT
+ *
+ * This should support 7054, both 7055 generations, 7058. Only 7054
+ * needs a bit of special treatment because of minor register differences
  */
 
-/* (c) copyright fenugrec 2016-2022
+/* (c) copyright fenugrec 2016-2024
  * GPLv3
  *
  * This program is free software: you can redistribute it and/or modify
@@ -141,7 +144,9 @@ static void build_ivt(u32 *dest) {
 /** init interrupts : set all prios to 0, set vbr */
 static void init_ints(void) {
 	INTC.IPRA.WORD = 0;
+#ifndef SH7054
 	INTC.IPRB.WORD = 0;
+#endif
 	INTC.IPRC.WORD = 0;
 	INTC.IPRD.WORD = 0;
 	INTC.IPRE.WORD = 0;
