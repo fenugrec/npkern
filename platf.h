@@ -75,6 +75,13 @@
 		#define RAMJUMP_PRELOAD_META 0xffffD800
 		#define NPK_SCI SCI2
 
+	#elif defined(SH7054)
+		#include "reg_defines/7054.h"
+		#define RAM_MIN	0xFFFF8000
+		#define RAM_MAX	0xFFFFBFFF
+		#define RAMJUMP_PRELOAD_META 0xffff8000
+		#define NPK_SCI SCI0
+
 	#else
 		#error No target specified !
 	#endif

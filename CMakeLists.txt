@@ -87,6 +87,7 @@ endfunction()
 #can't really automate the targets because sourcefiles and linkerscripts vary
 
 add_executable(npk_SH7051 ${NISSAN_SRCS} platf_7050.c pl_flash_7051.c)
+add_executable(npk_SH7054 ${NISSAN_SRCS} platf_7055.c pl_flash_7055_350nm.c)
 add_executable(npk_SH7055_35 ${NISSAN_SRCS} platf_7055.c pl_flash_7055_350nm.c)
 add_executable(npk_SH7055_18 ${NISSAN_SRCS} platf_7055.c pl_flash_705x_180nm.c)
 add_executable(npk_SH7058 ${NISSAN_SRCS} platf_7055.c pl_flash_705x_180nm.c)
@@ -96,6 +97,7 @@ add_executable(ssmk_SH7055_18 ${SUBARU_SRCS} platf_7055.c pl_flash_705x_180nm.c)
 
 # Select proper linker script
 target_link_options(npk_SH7051 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7051.ld)
+target_link_options(npk_SH7054 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7054.ld)
 target_link_options(npk_SH7055_35 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7055_7058.ld)
 target_link_options(npk_SH7055_18 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7055_7058.ld)
 target_link_options(npk_SH7058 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_7055_7058.ld)
@@ -106,6 +108,7 @@ target_link_options(ssmk_SH7055_18 PRIVATE -T ${CMAKE_SOURCE_DIR}/ldscripts/lkr_
 ## Add all Nissan targets here
 set(TGT_LIST
 	"SH7051"
+	"SH7054"
 	"SH7055_35"
 	"SH7055_18"
 	"SH7058"
@@ -119,3 +122,6 @@ endforeach()
 
 add_kernel(ssmk SH7058)
 add_kernel(ssmk SH7055_18)
+
+# temp WIP 7054 : don't compile
+set_target_properties(npk_SH7054 PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
