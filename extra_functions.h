@@ -15,7 +15,6 @@ FUNCS_DECL void imask_restore(unsigned unshifted_mask);
 
 extern __inline__ unsigned imask_savedisable() {
 	unsigned val;
-
 	asm volatile (
 		"stc	sr, r0 \n"
 		"mov r0, %0 \n"		//save orig SR
@@ -44,3 +43,4 @@ extern __inline__ void imask_restore(unsigned unshifted_mask) {
 			:"r0"
 	);
 }
+

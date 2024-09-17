@@ -34,15 +34,3 @@ void wdt_tog(void) {
 	return;
 }
 
-#if 0
-/** poll timer to generate WDT pulse */
-void do_wdt(void) {
-	if (ATU1.TCNTB > (WDT_MAXCNT + 100)) {
-		wdt_tog();
-		ATU1.TCNTB = 0;
-		ATU1.TSRB.BIT.CMF = 0;	//TCNT1B compare match
-	}
-	return;
-}
-#endif
-
