@@ -2,7 +2,7 @@
 # - generate .lst and .map files, and stack-usage
 # - 'install' .bin files to $sourcedir/precompiled
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
 set (CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH "Default install prefix")
 set (TEMP_INSTPREFIX ${CMAKE_INSTALL_PREFIX})
