@@ -12,7 +12,6 @@ In this document:
 * Porting to other devices / testing on different ECUs
 
 
-
 # General info
 
 Project presentation:
@@ -27,6 +26,15 @@ This project completes an entirely open-source solution for reflashing Nissan/In
 
 ## Which ECUs Will This Work On?
 Most gasoline Nissan / Infiniti ECUs from ~ 2002 onwards share very similar ECU hardware, based on SuperH microcontrollers manufactured by Renesas (previously Hitachi). This project supports ECUs that use the OBD-II K line signal for diagnostics communications.
+
+There is also support for certain Subaru ECUs (SSM protocol, also via K line).
+
+### supported SH mcus
+There is reflash code for 
+- SH7051
+- SH7054 (untested)
+- SH7055 (old and new - slightly different flash backend code)
+- SH7058
 
 ## How Does the Reflash Process Work?
 The process is carried out entirely over the OBD-II K Line serial communications link through an undocumented set of manufacturer-defined extensions to the standard ISO14230 protocol. Recently, the necessary commands have been reverse-engineered revealing the required steps:
